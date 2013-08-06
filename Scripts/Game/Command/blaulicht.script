@@ -1,0 +1,63 @@
+// Blaulicht-Script für Emergency 4
+// Auf Knopfdruck wird das Blaulicht angeschaltet, wenn es aus ist und ausgeschaltet, wenn es an ist
+// Script darf von jedem verwendet werden - ReadMe-Eintrag wünschenswert, aber keine Pflicht
+// Version: 1.0
+// Autor: EM4Modder
+
+ 
+ const char IMG[] = "blaulicht"; // Name des Icons für das Blaulicht-Script, verändern des ist erlaubt
+
+ object VCmdBlaulicht : CommandScript // Name des Blaulicht-Scriptes, verändern ist erlaubt
+ {
+ 	VCmdBlaulicht() // Name des Blaulicht-Scriptes, verändern ist erlaubt
+ 	{
+ 		SetIcon(IMG);
+ 		SetCursor(IMG);
+ 		SetRestrictions(RESTRICT_SELFEXECUTE);
+ 	}
+ 
+ 	bool CheckPossible(GameObject *Caller)
+ 	{
+ 		if (!Caller->IsValid())
+ 		{
+ 			return false;
+ 		}
+ 		if (Caller->GetType() == ACTOR_VEHICLE)
+ 		{
+ 			return true;
+ 		}
+ 
+ 		return false;
+ 	}
+ 
+ 	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+ 	{
+ 		if (!Caller->IsValid() || !Target->IsValid() || Target->GetID() != Caller->GetID())
+ 		{
+ 			return false;
+ 		}
+ 		if (Caller->GetType() == ACTOR_VEHICLE)
+ 		{
+ 			return true;
+ 		}
+
+ 		return true;
+ 	}
+ 
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+ 	{
+ 		Vehicle v(Caller);
+ 
+   		if (!v.IsBlueLightEnabled())
+ 		{
+ 			v.EnableBlueLights(true);
+  			return;
+ 		}
+
+ 		if (v.IsBlueLightEnabled())
+ 		{
+ 			v.EnableBlueLights(false);
+ 			return;
+ 		}
+ 	}	
+ };

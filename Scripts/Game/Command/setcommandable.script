@@ -1,0 +1,78 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SetCommandable - Script v1.0										                                    //
+// *******************************************								                            //
+//													                                                    //
+//	1.0| DUMMYSetCommandableFalse									                                    //
+//	   |												                                                //
+//	1.1| DUMMYSetCommandableTrue									                                    //
+//													                                                    //
+// _____________________										                                        //
+// a-rescue und Magicman mŸssen in der Readme genannt werden & der Kommentar muss so bleiben.		    //
+// Sonst freie Nutzung fŸr alle.									                                    //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 1.0
+object DUMMYSetCommandableFalse : CommandScript
+{ 
+	DUMMYSetCommandableFalse()
+	{
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		if (Caller->GetType() == ACTOR_VEHICLE)
+		{
+			Vehicle v(Caller);
+			v.SetCommandable(false);
+		}
+		else
+		if (Caller->GetType() == ACTOR_PERSON)
+		{
+			Person p(Caller);
+			p.SetCommandable(false);
+		}
+	}
+};
+
+// 1.1
+object DUMMYSetCommandableTrue : CommandScript
+{ 
+	DUMMYSetCommandableTrue()
+	{
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		if (Caller->GetType() == ACTOR_VEHICLE)
+		{
+			Vehicle v(Caller);
+			v.SetCommandable(true);
+		}
+		else
+		if (Caller->GetType() == ACTOR_PERSON)
+		{
+			Person p(Caller);
+			p.SetCommandable(true);
+		}
+	}
+};

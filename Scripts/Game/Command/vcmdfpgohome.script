@@ -1,0 +1,591 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Freeplay GoHome - Script v1.3									                                    //
+// ********************************************								                            //
+//													                                                    //
+//	1.0| VCmdFPGoHome										                                            //
+//	   |												                                                //
+//	2.0| DUMMYFPGoHome										                                            //
+//	   | |												                                                //
+//	   | |- Zu parkende Einheiten sind durch Kommentarzeilen (//) in Bloecke unterteilt. 		        //
+//	   | |  Jeder von ihnen kann entfernt werden, ohne dass das Skript unbrauchbar wird.		        //
+//	   | |												                                                //
+//	   | '- Die mit einem Stern (*) markierten Zeilen muessen angepasst werden.			                //
+//	   |    Mehrere Sterne bedeuten lediglich mehrere Anpassungen in einer Zeile.			            //
+//	   |    Dabei gilt: Zwei Sterne entsprechen zwei Anpassungen, und so weiter.			            //
+//	   |												                                                //
+//	2.1| DUMMYFPGoHomePersonal									                                        //
+//	     |												                                                //
+//	     |- Ausgangspunkte fuer das Fahrzeug-Personal sind durch Kommentarzeilen (//) in Bloecke	    //
+//	     |  unterteilt. Jeder von ihnen kann entfernt werden, ohne dass das Skript unbrauchbar          //
+//	     |  wird.											                                            //
+//	     |												                                                //
+//	     '- Die mit einem Stern (*) markierten Zeilen muessen angepasst werden.			                //
+//	        Mehrere Sterne bedeuten lediglich mehrere Anpassungen in einer Zeile.			            //
+//	        Dabei gilt: Zwei Sterne entsprechen zwei Anpassungen, und so weiter.			            //
+//													                                                    //
+// _____________________										                                        //
+// a-rescue und Magicman mŸssen in der Readme genannt werden & der Kommentar muss so bleiben.		    //
+// Sonst freie Nutzung fŸr alle.									                                    //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char IMG_ICON[]           = "basis";  // Name des Icons
+const char IMG_CURSOR[]         = "basis";  // Name des Cursors
+
+const char DUMMYGOHOME_V[]      = "DUMMYFPGoHome";
+const char DUMMYGOHOME_P[]      = "DUMMYFPGoHomePersonal";
+
+const char COMMANDABLE_TRUE[]   = "DUMMYSetCommandableTrue";
+const char COMMANDABLE_FALSE[]  = "DUMMYSetCommandableFalse";
+
+const char FREEFORALERT_TRUE[]  = "DUMMYFPSetFreeForAlertTrue";
+const char FREEFORALERT_FALSE[] = "DUMMYFPSetFreeForAlertFalse";
+const char FREEFORALERT[]       = "DUMMYFPIsFreeForAlert";
+
+const char INBASE_TRUE[]        = "DUMMYFPSetInBaseTrue";
+const char INBASE_FALSE[]       = "DUMMYFPSetInBaseFalse";
+const char INBASE[]             = "DUMMYFPIsInBase";
+
+int DummyGroup                  = "90";
+
+// 1.0
+object VCmdFPGoHome : CommandScript
+{ 
+	VCmdFPGoHome()
+	{
+		SetIcon(IMG_ICON);
+		SetCursor(IMG_CURSOR);
+        SetValidTargets(ACTOR_VEHICLE);
+		SetRestrictions(RESTRICT_SELFEXECUTE);
+		SetPossibleCallers(ACTOR_VEHICLE);
+		SetGroupID(DummyGroup);
+	}
+	
+	bool CheckGroupVisibility(GameObject *Caller)
+	{
+		/*Vehicle v(Caller);
+		PersonList pl = v.GetPassengers();
+		PersonList tl = v.GetTransports();
+		
+		if (pl.GetNumPersons() > 0 && tl.GetNumPersons() == 0)
+			return true;
+			
+		return false;*/
+		
+		return true;
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		if (!Caller->IsValid() || Caller->GetType() != ACTOR_VEHICLE)
+			return false;
+			
+		Vehicle v(Caller);
+		PersonList pl = v.GetPassengers();
+		PersonList tl = v.GetTransports();
+		
+		if (v.IsValid() && !v.IsDestroyed() /*&& pl.GetNumPersons() > 0*/ && tl.GetNumPersons() == 0)
+		{
+			return true;
+		}
+
+		return false;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		if (!Caller->IsValid() || !Target->IsValid() || Caller->GetID() != Target->GetID())
+			return false;
+
+		Vehicle v(Caller);
+		PersonList pl = v.GetPassengers();
+		PersonList tl = v.GetTransports();
+				
+		if (v.IsValid() && !v.IsDestroyed() /*&& pl.GetNumPersons() > 0*/ && tl.GetNumPersons() == 0)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		Vehicle v(Caller);
+		
+		if (v.IsBlueLightEnabled())
+		{
+			v.EnableBlueLights(false);
+		}
+		
+		if (v.HasCommand("DUMMYHasSiren"))
+		{
+			Game::ExecuteCommand("DUMMYDisableSiren", &v, &v);
+		}
+		
+		if (v.HasCommand("DUMMYHasAutoSiren"))
+		{
+			Game::ExecuteCommand("VCmdAutoSirenOff", &v, &v);
+		}
+		
+		v.PushActionWait(ACTION_NEWLIST, 0.1);
+            		v.PushActionExecuteCommand(ACTION_APPEND, DUMMYGOHOME_V , &v, 1, true);
+
+	}
+};
+
+// 2.0
+object DUMMYFPGoHome : CommandScript
+{ 
+	DUMMYFPGoHome()
+	{
+		SetGroupID(DummyGroup);
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{	
+		Vehicle v(Caller);
+		ActorList al;
+		Actor parkplatz;
+		Vector parkpos;
+		Vector anfahrpos;
+		Vector wendepos;
+		PersonList pl;
+
+/////// 23-8 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fpolizei"))				// Fahrzeugname
+		{
+			al=Game::GetActors("ppolizei");		// Name des virtuellen Objektes wo das Fahrzeug parken soll
+			anfahrpos = Vector (0,-300,0);		// siehe parken.txt
+			wendepos  = Vector (0,-600,0);		// siehe parken.txt
+		}
+		else
+/////// Stw1 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fstw1"))				// Fahrzeugname
+		{
+			al=Game::GetActors("pstw1");		// Name des virtuellen Objektes wo das Fahrzeug parken soll
+			anfahrpos = Vector (0,-300,0);		// siehe parken.txt
+			wendepos  = Vector (0,-600,0);		// siehe parken.txt
+		}
+		else
+/////// Stw2 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fstw2"))				// Fahrzeugname
+		{
+			al=Game::GetActors("pstw2");		// Name des virtuellen Objektes wo das Fahrzeug parken soll
+			anfahrpos = Vector (0,-300,0);		// siehe parken.txt
+			wendepos  = Vector (0,-600,0);		// siehe parken.txt
+		}
+		else
+/////// Mtw /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fmtw"))				// Fahrzeugname
+		{
+			al=Game::GetActors("pmtw");		// Name des virtuellen Objektes wo das Fahrzeug parken soll
+			anfahrpos = Vector (300,0,0);		// siehe parken.txt
+			wendepos  = Vector (300,0,0);		// siehe parken.txt
+		}
+		else
+/////// Lf /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("flf"))				// Fahrzeugname
+		{
+			al=Game::GetActors("plf");		// Name des virtuellen Objektes wo das Fahrzeug parken soll
+			anfahrpos = Vector (300,0,0);		// siehe parken.txt
+			wendepos  = Vector (300,0,0);		// siehe parken.txt
+		}
+		else
+/////// Dlk /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fdlk"))				// Fahrzeugname
+		{
+			al=Game::GetActors("pdlk");		// Name des virtuellen Objektes wo das Fahrzeug parken soll
+			anfahrpos = Vector (300,0,0);		// siehe parken.txt
+			wendepos  = Vector (300,0,0);		// siehe parken.txt
+		}
+		else
+/////// Rtw1 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("frtw1"))				// Fahrzeugname
+		{
+			al=Game::GetActors("prtw1");		// Name des virtuellen Objektes wo das Fahrzeug parken soll
+			anfahrpos = Vector (300,0,0);		// siehe parken.txt
+			wendepos  = Vector (650,0,0);		// siehe parken.txt
+		}
+		else
+/////// Rtw2 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("frtw2"))				// Fahrzeugname
+		{
+			al=Game::GetActors("prtw2");		// Name des virtuellen Objektes wo das Fahrzeug parken soll
+			anfahrpos = Vector (300,0,0);		// siehe parken.txt
+			wendepos  = Vector (650,0,0);		// siehe parken.txt
+		}
+		else
+/////// Rtw3 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("frtw3"))				// Fahrzeugname
+		{
+			al=Game::GetActors("prtw3");		// Name des virtuellen Objektes wo das Fahrzeug parken soll
+			anfahrpos = Vector (300,0,0);		// siehe parken.txt
+			wendepos  = Vector (650,0,0);		// siehe parken.txt
+		}
+		else
+/////// Nef /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fnef"))				// Fahrzeugname
+		{
+			al=Game::GetActors("pnef");		// Name des virtuellen Objektes wo das Fahrzeug parken soll
+			anfahrpos = Vector (300,0,0);		// siehe parken.txt
+			wendepos  = Vector (650,0,0);		// siehe parken.txt
+		}
+		else
+/////// Techniker /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("ftec"))				// Fahrzeugname
+		{
+			al=Game::GetActors("ptec");		// Name des virtuellen Objektes wo das Fahrzeug parken soll
+			anfahrpos = Vector (0,300,0);		// siehe parken.txt
+			wendepos  = Vector (0,600,0);		// siehe parken.txt
+		}
+		else
+/////// Asf1 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fasf1"))				// Fahrzeugname
+		{
+			al=Game::GetActors("pasf1");		// Name des virtuellen Objektes wo das Fahrzeug parken soll
+			anfahrpos = Vector (0,300,0);		// siehe parken.txt
+			wendepos  = Vector (0,600,0);		// siehe parken.txt
+		}
+		else
+/////// Asf2 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fasf1"))				// Fahrzeugname
+		{
+			al=Game::GetActors("pasf2");		// Name des virtuellen Objektes wo das Fahrzeug parken soll
+			anfahrpos = Vector (0,300,0);		// siehe parken.txt
+			wendepos  = Vector (0,600,0);		// siehe parken.txt
+		}
+		else
+/////// Asf3 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fasf3"))				// Fahrzeugname
+		{
+			al=Game::GetActors("pasf3");		// Name des virtuellen Objektes wo das Fahrzeug parken soll
+			anfahrpos = Vector (0,300,0);		// siehe parken.txt
+			wendepos  = Vector (0,600,0);		// siehe parken.txt
+		}
+		else
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Weitere Fahrzeugblšcke hier einfŸgen
+		{
+			Mission::PlayHint("Für dieses Fahrzeug konnte kein Parkplatz gefunden werden! Code 1");
+			return;
+		}
+
+		if(al.GetNumActors() > 0)
+		{
+			parkplatz = *al.GetActor(0);
+			parkpos   = parkplatz.GetPosition();
+		}
+		else
+		{
+			Mission::PlayHint("Für dieses Fahrzeug konnte kein Parkplatz gefunden werden! Code 2");
+			return;
+		}
+		
+		bool vready = true;
+
+		if (v.GetNumPassengers() == 0)
+		{
+			vready = false;
+		}
+		pl = v.GetPassengers();
+		for(int i=0; i < pl.GetNumPersons(); i++)
+		{
+			if (pl.GetPerson(i)->GetLife() < pl.GetPerson(i)->GetMaxLife())
+			{
+				vready = false;
+			}
+		}
+		if (vready)
+		{
+			Game::ExecuteCommand(FREEFORALERT_TRUE, &v, &v);
+		}
+		Game::FindFreePosition(&v, parkpos);
+		v.PushActionMove(ACTION_NEWLIST, parkpos+anfahrpos);
+		v.PushActionTurnTo(ACTION_APPEND, parkpos+wendepos);
+		v.PushActionMove(ACTION_APPEND, parkpos);
+		v.PushActionExecuteCommand(ACTION_APPEND, INBASE_TRUE, &v, 1, true);
+		v.PushActionExecuteCommand(ACTION_APPEND, COMMANDABLE_FALSE, &v, 1, true);
+		v.PushActionExecuteCommand(ACTION_APPEND, DUMMYGOHOME_P, &v, 1, true);
+	    v.PushActionExecuteCommand(ACTION_APPEND, "CloseGate", Caller, 1, true);
+	}
+};
+
+// 2.1
+object DUMMYFPGoHomePersonal : CommandScript
+{ 
+	DUMMYFPGoHomePersonal()
+	{
+		SetGroupID(DummyGroup);
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		Vehicle v(Caller);
+		ActorList al;
+		Actor act;
+		Vector actpos;
+		PersonList pl;
+		Person p;
+		
+
+/////// Polizei-Fahrzeug ////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fpolizei"))
+		{
+			al=Game::GetActors("tpolizei");	//Name des Eingangs für das Personal (Virtuelles Objekt)
+			if(al.GetNumActors() > 0)	
+			{
+				act    = *al.GetActor(0);
+				actpos = act.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Personal-Eingang nicht finden!");
+				return;
+			}
+		}
+		else
+/////// Stw1 ////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fstw1"))
+		{
+			al=Game::GetActors("tpolizei");	//Name des Eingangs für das Personal (Virtuelles Objekt)
+			if(al.GetNumActors() > 0)	
+			{
+				act    = *al.GetActor(0);
+				actpos = act.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Personal-Eingang nicht finden!");
+				return;
+			}
+		}
+		else
+/////// Stw2 ////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fstw2"))
+		{
+			al=Game::GetActors("tpolizei");	//Name des Eingangs für das Personal (Virtuelles Objekt)
+			if(al.GetNumActors() > 0)	
+			{
+				act    = *al.GetActor(0);
+				actpos = act.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Personal-Eingang nicht finden!");
+				return;
+			}
+		}
+		else
+/////// Mtw ////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fmtw"))
+		{
+			al=Game::GetActors("tfeuerwehr");	//Name des Eingangs für das Personal (Virtuelles Objekt)
+			if(al.GetNumActors() > 0)	
+			{
+				act    = *al.GetActor(0);
+				actpos = act.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Personal-Eingang nicht finden!");
+				return;
+			}
+		}
+		else
+/////// Lf ////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("flf"))
+		{
+			al=Game::GetActors("tfeuerwehr");	//Name des Eingangs für das Personal (Virtuelles Objekt)
+			if(al.GetNumActors() > 0)	
+			{
+				act    = *al.GetActor(0);
+				actpos = act.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Personal-Eingang nicht finden!");
+				return;
+			}
+		}
+		else
+/////// Dlk ////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fdlk"))
+		{
+			al=Game::GetActors("tfeuerwehr");	//Name des Eingangs für das Personal (Virtuelles Objekt)
+			if(al.GetNumActors() > 0)	
+			{
+				act    = *al.GetActor(0);
+				actpos = act.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Personal-Eingang nicht finden!");
+				return;
+			}
+		}
+		else
+/////// Rtw1 ////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("frtw1"))
+		{
+			al=Game::GetActors("tRettungsdienst");	//Name des Eingangs für das Personal (Virtuelles Objekt)
+			if(al.GetNumActors() > 0)	
+			{
+				act    = *al.GetActor(0);
+				actpos = act.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Personal-Eingang nicht finden!");
+				return;
+			}
+		}
+		else
+/////// Rtw2 ////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("frtw2"))
+		{
+			al=Game::GetActors("tRettungsdienst");	//Name des Eingangs für das Personal (Virtuelles Objekt)
+			if(al.GetNumActors() > 0)	
+			{
+				act    = *al.GetActor(0);
+				actpos = act.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Personal-Eingang nicht finden!");
+				return;
+			}
+		}
+		else
+/////// Rtw3 ////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("frtw3"))
+		{
+			al=Game::GetActors("tRettungsdienst");	//Name des Eingangs für das Personal (Virtuelles Objekt)
+			if(al.GetNumActors() > 0)	
+			{
+				act    = *al.GetActor(0);
+				actpos = act.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Personal-Eingang nicht finden!");
+				return;
+			}
+		}
+		else
+/////// Nef ////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fnef"))
+		{
+			al=Game::GetActors("tRettungsdienst");	//Name des Eingangs für das Personal (Virtuelles Objekt)
+			if(al.GetNumActors() > 0)	
+			{
+				act    = *al.GetActor(0);
+				actpos = act.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Personal-Eingang nicht finden!");
+				return;
+			}
+		}
+		else
+/////// Techniker-Fahrzeug ////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("ftec"))
+		{
+			al=Game::GetActors("ttec");	//Name des Eingangs für das Personal (Virtuelles Objekt)
+			if(al.GetNumActors() > 0)	
+			{
+				act    = *al.GetActor(0);
+				actpos = act.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Personal-Eingang nicht finden!");
+				return;
+			}
+		}
+		else
+/////// Asf1 ////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fasf1"))
+		{
+			al=Game::GetActors("ttec");	//Name des Eingangs für das Personal (Virtuelles Objekt)
+			if(al.GetNumActors() > 0)	
+			{
+				act    = *al.GetActor(0);
+				actpos = act.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Personal-Eingang nicht finden!");
+				return;
+			}
+		}
+		else
+/////// Asf2 ////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fasf2"))
+		{
+			al=Game::GetActors("ttec");	//Name des Eingangs für das Personal (Virtuelles Objekt)
+			if(al.GetNumActors() > 0)	
+			{
+				act    = *al.GetActor(0);
+				actpos = act.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Personal-Eingang nicht finden!");
+				return;
+			}
+		}
+		else
+/////// Asf3 ////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasName("fasf3"))
+		{
+			al=Game::GetActors("ttec");	//Name des Eingangs für das Personal (Virtuelles Objekt)
+			if(al.GetNumActors() > 0)	
+			{
+				act    = *al.GetActor(0);
+				actpos = act.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Personal-Eingang nicht finden!");
+				return;
+			}
+		}
+		else
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Weitere Blšcke hier einfŸgen
+		{
+			Mission::PlayHint("Kann Fahrzeug-Personal keinen Eingang zuweisen!");
+			return;
+		}
+		pl = v.GetPassengers();
+		for(int i=0; i < pl.GetNumPersons(); i++)
+		{
+			p = pl.GetPerson(i);
+			p.PushActionExecuteCommand(ACTION_NEWLIST, COMMANDABLE_FALSE, &p, 1, true);
+			p.PushActionLeaveCar(ACTION_APPEND, Target);
+			p.PushActionMove(ACTION_APPEND, actpos, true);
+			p.PushActionDeleteOwner(ACTION_APPEND);
+		}
+	}
+};

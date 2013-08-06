@@ -1,0 +1,139 @@
+// Ein Produkt der Zusammenarbeit der Community
+
+const char IMG[] = "normal";	//Button (kein dds anhängen und auch keine prefixe wie "OVER_")
+const char NORMDUM[] = "DummyHasPolizeiNormal238";	//Dieses Dummy-Cmd muss das Fahrzeug haben
+const char NORM[] = "PolizeiNormal238";	//Name dieses Scripts
+const char NORMPRO[] = "mod:Prototypes/Persons/Polizei/Polizist Normal 23-8.e4p";	//Prototyp der neuen Person
+const char ANIM_CHANGE_CLOTHES[] = "talkto";	//Name der Animation die beim Umziehen ausgeführt wird
+	
+
+object PolizeiNormal238 : CommandScript	//Der Objektname ("ChangeClothes") muss geändert werden
+{
+	PolizeiNormal238()	//Das ist der Konstruktorname und ist mit dem Objektname immer identisch
+	{
+		SetValidTargets(ACTOR_VEHICLE);
+		SetIcon(IMG);
+		SetCursor(IMG);
+	}
+	
+	bool CheckPossible(GameObject *Caller)
+	{
+		if(!Caller->IsValid())
+			return false;
+			
+		return true;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		Vehicle v(Target);
+
+		if(!Target->IsValid() || !v.HasCommand(NORMDUM) || v.IsSmoking() || v.IsDestroyed())
+			return false;
+
+		return true;
+	}
+	
+	void PushActions(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		switch(ChildID)
+		{
+			case 0:
+				Caller->PushActionMove(ACTION_NEWLIST, Target, TARGET_REARDOOR);
+				Caller->PushActionTurnTo(ACTION_APPEND, Target);
+				Caller->PushActionSwitchAnim(ACTION_APPEND, ANIM_CHANGE_CLOTHES);
+				Caller->PushActionExecuteCommand(ACTION_APPEND, NORM, Target, 1);
+				break;
+				
+			case 1:
+				float life;
+				Person p(Caller);
+				life = p.GetHealth();
+				p.ChangePrototype(NORMPRO);
+				p.SetHealth(life);
+				break;
+		}
+	}
+};
+
+object DummyHasPolizeiNormal238 : CommandScript
+{
+	DummyHasPolizeiNormal238()
+	{
+    	SetGroupID(20);
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+    	return false;
+	}
+};
+
+const char IMG[] = "warnweste";	//Button (kein dds anhängen und auch keine prefixe wie "OVER_")
+const char CMD_DUMMY[] = "DummyHasPolizeiWarnweste238";	//Dieses Dummy-Cmd muss das Fahrzeug haben
+const char CMD_THIS[] = "PolizeiWarnweste238";	//Name dieses Scripts
+const char PROTO_NEW[] = "mod:Prototypes/Persons/Polizei/Polizist Warnweste 23-8.e4p";	//Prototyp der neuen Person
+const char ANIM_CHANGE_CLOTHES[] = "talkto";	//Name der Animation die beim Umziehen ausgeführt wird
+	
+
+object PolizeiWarnweste238 : CommandScript	//Der Objektname ("ChangeClothes") muss geändert werden
+{
+	PolizeiWarnweste238()	//Das ist der Konstruktorname und ist mit dem Objektname immer identisch
+	{
+		SetValidTargets(ACTOR_VEHICLE);
+		SetIcon(IMG);
+		SetCursor(IMG);
+	}
+	
+	bool CheckPossible(GameObject *Caller)
+	{
+		if(!Caller->IsValid())
+			return false;
+			
+		return true;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		Vehicle v(Target);
+
+		if(!Target->IsValid() || !v.HasCommand(CMD_DUMMY) || v.IsSmoking() || v.IsDestroyed())
+			return false;
+
+		return true;
+	}
+	
+	void PushActions(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		switch(ChildID)
+		{
+			case 0:
+				Caller->PushActionMove(ACTION_NEWLIST, Target, TARGET_REARDOOR);
+				Caller->PushActionTurnTo(ACTION_APPEND, Target);
+				Caller->PushActionSwitchAnim(ACTION_APPEND, ANIM_CHANGE_CLOTHES);
+				Caller->PushActionExecuteCommand(ACTION_APPEND, CMD_THIS, Target, 1);
+				break;
+				
+			case 1:
+				float life;
+				Person p(Caller);
+				life = p.GetHealth();
+				p.ChangePrototype(PROTO_NEW);
+				p.SetHealth(life);
+				break;
+		}
+	}
+};
+
+object DummyHasPolizeiWarnweste238 : CommandScript
+{
+	DummyHasPolizeiWarnweste238()
+	{
+    	SetGroupID(20);
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+    	return false;
+	}
+};

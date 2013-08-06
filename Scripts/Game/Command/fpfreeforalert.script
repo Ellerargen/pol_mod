@@ -1,0 +1,179 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Freeplay FreeForAlert - Script v1.0									                                //
+// ************************************************							                            //
+//													                                                    //
+//	1.0| VCmdFPSetFreeForAlert									                                        //
+//	   |												                                                //
+//	2.0| DUMMYFPSetFreeForAlertTrue									                                    //
+//	   |												                                                //
+//	2.1| DUMMYFPSetFreeForAlertFalse								                                    //
+//	   |												                                                //
+//	3.0| DUMMYFPIsFreeForAlert									                                        //
+//													                                                    //
+// _____________________										                                        //
+// a-rescue und Magicman mŸssen in der Readme genannt werden & der Kommentar muss so bleiben.		    //
+// Sonst freie Nutzung fŸr alle.									                                    //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char FREEFORALERT_TRUE[]  = "DUMMYFPSetFreeForAlertTrue";
+const char FREEFORALERT_FALSE[] = "DUMMYFPSetFreeForAlertFalse";
+const char FREEFORALERT[]       = "DUMMYFPIsFreeForAlert";
+
+int DummyGroup                  = 73;
+
+// 1.0
+object VCmdFPSetFreeForAlert : CommandScript
+{ 
+	VCmdFPSetFreeForAlert()
+	{
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		if (!Caller->IsValid() || Caller->GetType() != ACTOR_VEHICLE)
+			return false;
+			
+		Vehicle v(Caller);
+		PersonList pl = v.GetPassengers();
+		PersonList tl = v.GetTransports();
+
+		if (v.IsInstalled())
+			return false;
+		
+		if (v.IsValid() && !v.IsDestroyed() /*&& pl.GetNumPersons() > 0*/ && tl.GetNumPersons() == 0)
+		{
+			return true;
+		}
+
+		return false;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		if (!Caller->IsValid() || !Target->IsValid() || Caller->GetID() != Target->GetID())
+			return false;
+
+		Vehicle v(Caller);
+		PersonList pl = v.GetPassengers();
+		PersonList tl = v.GetTransports();
+
+		if (v.IsInstalled())
+			return false;
+		
+		if (v.IsValid() && !v.IsDestroyed() /*&& pl.GetNumPersons() > 0*/ && tl.GetNumPersons() == 0)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		Vehicle v(Caller);
+		
+		if (!v.HasCommand(FREEFORALERT))
+		{
+			v.AssignCommand(FREEFORALERT);
+		}
+		else
+		{
+			v.RemoveCommand(FREEFORALERT);
+		}
+	}
+};
+
+// 2.0
+object DUMMYFPSetFreeForAlertTrue : CommandScript
+{ 
+	DUMMYFPSetFreeForAlertTrue()
+	{
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		if (Caller->GetType() == ACTOR_VEHICLE)
+		{
+			Vehicle v(Caller);
+			PersonList tl = v.GetTransports();
+			
+			if (!v.HasCommand(FREEFORALERT))
+			{
+				if (tl.GetNumPersons() == 0)
+				{
+					v.AssignCommand(FREEFORALERT);
+				}
+			}
+		}
+	}
+};
+
+// 2.1
+object DUMMYFPSetFreeForAlertFalse : CommandScript
+{ 
+	DUMMYFPSetFreeForAlertFalse()
+	{
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		if (Caller->GetType() == ACTOR_VEHICLE)
+		{
+			Vehicle v(Caller);
+			
+			if (v.HasCommand(FREEFORALERT))
+			{
+				v.RemoveCommand(FREEFORALERT);
+			}
+		}
+	}
+};
+
+// 3.0
+object DUMMYFPIsFreeForAlert : CommandScript
+{
+ 	DUMMYFPIsFreeForAlert()
+ 	{
+ 		SetGroupID(DummyGroup);
+ 	}
+ 
+ 	bool CheckGroupVisibility(GameObject *Caller)
+ 	{
+ 		return false;
+ 	}
+ 
+ 	bool CheckPossible(GameObject *Caller)
+ 	{
+ 		return false;
+ 	}
+ 
+ 
+ 	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+ 	{
+ 		return false;
+ 	}
+ 
+ 	void PushActions(GameObject *Caller, Actor *Target, int childID)
+ 	{
+ 	}
+};

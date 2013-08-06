@@ -1,0 +1,101 @@
+//Script von Niederwallufer
+//Script frei verwendbar, wenn Komentarzeilen erhalten bleiben.
+//Readmeeintrag wäre schön aber nicht notwendig
+
+//Dem Fahrzeug werden die Commands speed_slow , speed_normal und speed_fast zugewiesen.
+//Demoicons sind vorhanden. Die Geschwindigkeit kann unten verändert werden.
+//Das Script ist an dem Originalen NEF auszuprobieren. Dazu einfach Freeplay laden.
+
+
+const char IMG1[] = "1";   //Icon der Geschwindigkeitsstufe 1
+const char IMG2[] = "2";  //Icon der Geschwindigkeitsstufe 2
+const char IMG3[] = "3";  //Icon der Geschwindigkeitsstufe 3
+
+
+
+object speed_slow: CommandScript
+{
+	speed_slow()
+	{
+    	  SetIcon(IMG1);
+ 	  SetCursor(IMG1);
+ 	  SetRestrictions(RESTRICT_SELFEXECUTE);    
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+            Vehicle v(Caller);
+
+            v.SetSpeed(6.0);   //Geschwindigkeit
+	}
+};
+
+
+
+object speed_normal: CommandScript
+{
+	speed_normal()
+	{
+    	  SetIcon(IMG2);
+ 	  SetCursor(IMG2);
+ 	  SetRestrictions(RESTRICT_SELFEXECUTE);    
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+            Vehicle v(Caller);
+
+            v.SetSpeed(9.0);     //Geschwindigkeit
+	}
+};
+
+object speed_fast: CommandScript
+{
+	speed_fast()
+	{
+    	  SetIcon(IMG3);       
+ 	  SetCursor(IMG3);
+ 	  SetRestrictions(RESTRICT_SELFEXECUTE);    
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+            Vehicle v(Caller);
+
+            v.SetSpeed(12.0);      //Geschwindigkeit
+	}
+};
+
+
+
+

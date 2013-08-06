@@ -1,0 +1,149 @@
+/* **************************************************************************** */
+/*                                                                              */
+/* HEAL.SCRIPT - Script zur Versorgung von Verletzten.				*/
+/*                                                                              */
+/* Dieses Commandscript dient zum Versorgen von Verletzten.			*/
+/* Es kann Notärzten sowie auch den RAs vergeben werden. Das Script 		*/
+/* unterscheidet, welche Personenart gerade behandelt und gibt entsprechende    */
+/* Meldungen aus. Weiterhin kann der Notarzt im Fahrzeug eingeklemmte Personen  */
+/* erstversorgen.	                                                        */
+/*                                                                              */
+/* 29.09.2008, SM,   Initial-Version                                            */
+/*                                                                              */
+/*                                                                              */
+/* Die Verwendung in anderen Mods ist gestattet, solange dieser Kommentarblock  */
+/* erhalten bleibt. Ein Readme-Eintrag wäre wünschenswert.                      */
+/*                                                                              */
+/*                  Copyright © Eins Eins Zwo Modifications			*/
+/*                                                                              */
+/* **************************************************************************** */
+
+object Heal : CommandScript
+{
+	Heal()
+	{
+		SetValidTargets(ACTOR_PERSON | ACTOR_VEHICLE);
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		if(!Caller->IsValid() || !Target->IsValid() || Target->GetID() == Caller->GetID())
+			return false;
+
+		if(Target->GetType()==ACTOR_PERSON)
+		{
+			Person p(Target);
+			if(!p.IsDrowning() && !p.IsHealing() && p.GetRole() != ROLE_ANIMAL && !p.IsRescueDog() && (p.IsInjured() || p.IsWoundedSquad()) && p.GetEnteredCarID() == -1 && !p.IsCarried())
+				return true;
+		}
+
+		if(Target->GetType()==ACTOR_VEHICLE)
+		{
+			GameObject obj(Target);
+			Person p(Caller);
+			if (obj.IsFlagSet(OF_PERSON_ENCLOSED) && !p.IsRescueDog())
+				return true;
+		}
+		return false;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		Person p(Target);
+
+		if (p.GetRole() == ROLE_SQUAD)
+		{
+			p.SetClassified(true);
+			Caller->PushActionMove(ACTION_NEWLIST, Target, TARGET_TREATMENT);
+			Caller->PushActionTurnTo(ACTION_APPEND, Target);
+			Caller->PushActionHeal(ACTION_APPEND, Target);
+			Caller->PushActionExecuteCommand(ACTION_APPEND,"check_life",Target);
+			return;
+		}
+
+		bool carriedClassified = false;
+		if (p.IsClassified())
+			carriedClassified = true;
+
+		Caller->PushActionMove(ACTION_NEWLIST, Target, TARGET_TREATMENT);
+		Caller->PushActionTurnTo(ACTION_APPEND, Target);
+		Person ra(Caller);
+
+		if (ra.IsParamedicTeam())
+		{
+			Caller->PushActionExecuteCommand(ACTION_APPEND,"RDVersorgt",Target,0,false);
+			Caller->PushActionHeal(ACTION_APPEND, Target, true);
+		} 
+		else 
+		{
+			if (Target->GetType() == ACTOR_VEHICLE)
+			{
+				Vehicle veh(Target);
+				Caller->PushActionMove(ACTION_APPEND,Target,TARGET_SHEARSDOOR);
+				Caller->PushActionTurnTo(ACTION_APPEND, Target);
+				Caller->PushActionSwitchAnim(ACTION_APPEND, "treatinjured2");
+				PersonList pl(Target->GetName());
+				if (pl.GetNumPersons() > 0)
+				{
+					Person p=pl.GetPerson(0);
+					p.SetInjuredLifeDrain(p.GetInjuredLifeDrain()/4);
+					p.SetClassified(true);
+				}
+			} 
+			else 
+			{
+				Caller->PushActionHeal(ACTION_APPEND, Target);
+				Caller->PushActionExecuteCommand(ACTION_APPEND,"check_life",Target);
+			}
+			p.SetUserData(42);
+		}
+	}
+};
+
+object check_life : CommandScript
+{
+	check_life()
+	{
+	}
+
+   	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+   	{
+      		return true;
+   	}
+
+    	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+   		Person p(Target);
+   		if (p.IsDead())
+   		{
+   			Mission::PlayHint("Die Person ist verstorben!");
+   		}
+	}
+};
+
+object RDVersorgt : CommandScript
+{
+	RDVersorgt()
+	{
+		SetGroupID(20);
+	}
+
+   	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+   	{
+      		return false;
+   	}
+
+    	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		Person p(Target);
+		Person ra(Caller);
+		if ((p.GetLife() < 500) && (p.GetUserData() != 42) && (p.GetUserData() != 43))
+		{
+			Mission::PlayHint("Es ist ein Notarzt erforderlich!");
+		}
+		p.SetInjuredLifeDrain(p.GetInjuredLifeDrain()/5);
+		p.SetClassified(true);
+		if (p.GetUserData() != 42)
+			p.SetUserData(43);
+	}
+};

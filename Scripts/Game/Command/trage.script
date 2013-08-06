@@ -1,0 +1,101 @@
+//	MT_RA trageverwenden.script V2.0 by manuelt
+//	Die Verwendung in anderen Emergency3-Modifikationen ist gestattet,
+//	wenn dieser Kommentar im Skript erhalten bleibt!
+
+//	2 RAs werden zu der bekannten Sani+Krankentrage-Kombination
+
+// Änderungen von SMundt - EinsEinsZwo Modifications
+
+object TrageAufnehmen : CommandScript
+{
+	TrageAufnehmen()
+	{
+		SetCursor("trage");
+		SetIcon("trage");
+		SetGroupID(CGROUP_GETEQUIPMENT);
+		SetRestrictions(RESTRICT_NOTDESTROYED | RESTRICT_NOTBURNING);
+		SetValidTargets(ACTOR_VEHICLE);
+		SetPossibleCallers(ACTOR_PERSON);
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		if(!Caller->IsValid() || !Target->IsValid() || Target->GetID() == Caller->GetID())
+			return false;
+
+		Person p(Caller);
+
+		if (p.IsCarryingPerson())
+			return false;
+
+		if(!p.IsValid() || p.IsLinkedWithPerson() || p.GetEnteredCarID() != -1)
+			return false;
+
+		Vehicle vec(Target);
+
+		if (!vec.IsValid() || vec.IsDestroyed() || (vec.GetVehicleType() != VT_AMBULANCE_RHC && vec.GetVehicleType() != VT_AMBULANCE_ITW && vec.GetVehicleType() != VT_AMBULANCE_RTW))
+			return false;
+
+		//Command-Skript kann nur von genau 2 Personen gleichzeitig ausgeführt werden
+		GameObjectList persons = Game::GetSelectedGameObjects();
+
+		if (persons.GetNumObjects() == 2)
+		{
+			Person ra1(persons.GetObject(0));
+			Person ra2(persons.GetObject(1));
+
+			//Beide Personen RAs?
+			if (ra1.HasCommand("TrageAufnehmen") && ra2.HasCommand("TrageAufnehmen"))
+			{
+				ra1.SetUserData(0);
+				ra2.SetUserData(1);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		Vector pos = Target->GetTargetPoint(Caller, TARGET_REARDOOR);
+		Caller->SetCommandable(false);
+		Caller->PushActionMove(ACTION_NEWLIST, pos);
+		Caller->PushActionTurnTo(ACTION_APPEND, Target);
+		Caller->PushActionExecuteCommand(ACTION_APPEND,"create_2ra_trage",Target);
+		Caller->PushActionDeleteOwner(ACTION_APPEND);
+	}
+};
+
+object create_2ra_trage : CommandScript
+{
+	create_2ra_trage()
+	{
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		return true;
+	}
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		Vector pos = Target->GetTargetPoint(Target, TARGET_REARDOOR);
+		if (Game::FindAvailablePosition(Caller, pos, 250))
+		{
+			if (Caller->GetUserData() != 1) // 1.RA erzeugt neue Person
+			{
+				Person new_paramedic = Game::CreatePerson("mod:Prototypes/Persons/Ambulance/paramedic.e4p",Target->GetName());
+				new_paramedic.SetPosition(pos);
+				new_paramedic.Hide();
+				new_paramedic.PushActionSwitchAnim(ACTION_APPEND,"paramedicput");
+				new_paramedic.PushActionWait(ACTION_APPEND, 3.f);
+				new_paramedic.PushActionShowHide(ACTION_APPEND, false);
+				new_paramedic.PushActionSwitchAnim(ACTION_APPEND,"idle");
+			}
+			else return;
+		}
+	}
+};

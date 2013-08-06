@@ -1,0 +1,114 @@
+//**************************************************************************************************
+// #Version 2.0#										****
+//												****
+// 		Changes: - Disables Sirens after arriving targetpoint.				****
+//												****
+//												****
+// 		DO NEVER REPLACE ORIGINAL SCRIPTS USED BY EM4 IN YOUR DATA-FOLDER!		****
+//**************************************************************************************************
+
+const char DUMMY_DISABLE[] = "DUMMYDisableSiren";
+
+object MoveTo : CommandScript
+{
+	MoveResult mr;
+	
+	MoveTo()
+	{
+		SetValidTargets(ACTOR_FLOOR | ACTOR_OBJECT | ACTOR_VIRTUAL | ACTOR_HOUSE | ACTOR_OPEN_HOUSE);
+		SetHighlightingEnabled(false);
+		SetDeselectCaller(false);
+		//SetActivationByLeftClick(true);
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		mr = Commands::CheckMoveConditions(Caller, Target, childID);
+		if (mr.Mode == MOVE_ABORT)
+			return false;
+		
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		if (mr.Mode == MOVE_ABORT)
+			return;
+
+		switch(mr.Mode)
+		{
+			case MOVE_TO_POSITION:
+			{
+				if (Caller->GetFirehoseID() > 0)
+				{
+					Caller->PushActionMoveWithHose(ACTION_NEWLIST, mr.Target);
+					return;
+				}
+				Caller->PushActionMove(ACTION_NEWLIST, mr.Target, true);
+				Caller->PushActionExecuteCommand(ACTION_APPEND, DUMMY_DISABLE, Caller, 2, false);
+				break;
+			}
+			
+			case MOVE_INTO_HOUSE:
+			{
+				Caller->PushActionMove(ACTION_NEWLIST, mr.Intermediate1, true);
+				Caller->PushActionEnterHouse(ACTION_APPEND, &mr.EnterHouse);
+				Caller->PushActionMove(ACTION_APPEND, mr.Target, true);
+				break;
+			}
+			
+			case MOVE_HOUSE_TO_HOUSE:
+			{
+				Caller->PushActionMove(ACTION_NEWLIST, mr.Intermediate1, true);
+				Caller->PushActionLeaveHouse(ACTION_APPEND, &mr.LeaveHouse);
+				Caller->PushActionMove(ACTION_APPEND, mr.Intermediate2, true);
+				Caller->PushActionEnterHouse(ACTION_APPEND, &mr.EnterHouse);
+				Caller->PushActionMove(ACTION_APPEND, mr.Target, true);
+				break;
+			}
+			
+			case MOVE_HOUSE_TO_POSITION:
+			{
+				Caller->PushActionMove(ACTION_NEWLIST, mr.Intermediate1, true);
+				Caller->PushActionLeaveHouse(ACTION_APPEND, &mr.LeaveHouse);
+				Caller->PushActionMove(ACTION_APPEND, mr.Target, true);
+				break;
+			}
+		}
+
+		if (Caller->GetType() == ACTOR_VEHICLE)
+		{
+			Vehicle v(Caller);
+			v.RemoveObjectPath();
+			if (v.IsLightOn())
+			{
+				Caller->PushActionLightOn(ACTION_INSERT, false);
+			}
+		}
+
+		// Special code for fgrr (Bergefahrzeug). Deinstalls itself automatically
+		if (mr.UnInstall) 
+		{
+			Vehicle v(Caller);
+			if (v.GetVehicleType() == VT_THW_FGRR_BKF)
+			{
+				//System::Print("FGRR: Mode 1 - DeInstall");
+				Caller->PushActionDeinstall(ACTION_INSERT);
+			}
+
+			else if (v.GetVehicleType() == VT_FIREFIGHTERS_DLK)
+			{
+				if (mr.BasketDown && mr.UnInstall)
+				{
+					Caller->PushActionDeinstall(ACTION_INSERT);
+					Caller->PushActionBasketDown(ACTION_INSERT, Vector(0.f, 0.f, 0.f));
+				}
+				else if (mr.BasketDown)
+				     	Caller->PushActionBasketDown(ACTION_INSERT, Vector(0.f, 0.f, 0.f));
+				else if (mr.UnInstall)
+				     	Caller->PushActionDeinstall(ACTION_INSERT);
+			}
+		}
+		Caller->PushActionExecuteCommand(ACTION_APPEND, DUMMY_DISABLE, Caller, 2, false);
+	}
+};

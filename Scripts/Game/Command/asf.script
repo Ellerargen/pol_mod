@@ -1,0 +1,110 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Freeplay Alarm ASF - Script v1.7									//
+// ************************************************							//
+//													//
+//	1.0| PCmdFPAlarmASF										//
+//													//
+// _____________________										//
+// 													//							
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+const char IMG_ICON[]           = "asf";
+const char IMG_CURSOR[]         = "asf";
+
+const char COMMANDABLE_TRUE[]   = "DUMMYSetCommandableTrue";
+const char COMMANDABLE_FALSE[]  = "DUMMYSetCommandableFalse";
+
+const char FREEFORALERT_TRUE[]  = "DUMMYFPSetFreeForAlertTrue";
+const char FREEFORALERT_FALSE[] = "DUMMYFPSetFreeForAlertFalse";
+const char FREEFORALERT[]       = "DUMMYFPIsFreeForAlert";
+
+const char INBASE_TRUE[]        = "DUMMYFPSetInBaseTrue";
+const char INBASE_FALSE[]       = "DUMMYFPSetInBaseFalse";
+const char INBASE[]             = "DUMMYFPIsInBase";
+
+// 1.0
+object asf : CommandScript
+{
+
+	asf()
+	{
+		SetIcon(IMG_ICON);
+		SetCursor(IMG_CURSOR);
+		SetPossibleCallers(ACTOR_PERSON);
+		SetGroupID(CGROUP_GETEQUIPMENT);
+		SetValidTargets(ACTOR_FLOOR | ACTOR_STREET);
+		SetDoubleClickable(false);
+		SetActivationByLeftClick(false);
+	}
+	
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		Person p(Caller);
+		Vehicle v(Caller);
+		
+		return true;	
+			
+		if (Caller->GetID() == Target->GetID())
+			return false;
+			
+		return false;
+	}
+	
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		GameObjectList ol;
+		GameObject *o;
+		ol = Game::GetGameObjects("fasf1");
+		o = *ol.GetObject(0);
+		Vehicle v(o);
+
+		GameObjectList ol1;
+		GameObject *o1;
+		ol1 = Game::GetGameObjects("fasf2");
+		o1 = *ol1.GetObject(0);
+		Vehicle v1(o1);
+
+		GameObjectList ol2;
+		GameObject *o2;
+		ol2 = Game::GetGameObjects("fasf3");
+		o2 = *ol2.GetObject(0);
+		Vehicle v2(o2);
+
+		Vector tpos;
+
+		if ((!v.HasCommand(FREEFORALERT)) && (!v1.HasCommand(FREEFORALERT)) && (!v2.HasCommand(FREEFORALERT)))
+		{
+			Audio::PlaySample("mod:Audio/FX/Alarm/asf_nicht_verfügbar.wav");
+			return;
+		}
+		else if ((v.HasCommand(FREEFORALERT)) || (v1.HasCommand(FREEFORALERT)) || (v2.HasCommand(FREEFORALERT)))
+		{
+			//  einsatzort
+			tpos = Game::GetCommandPos();
+
+			if (v.HasCommand(FREEFORALERT))
+			{
+				Game::ExecuteCommand("asf1",Caller,Target);
+			}
+			else if (v1.HasCommand(FREEFORALERT))
+			{
+				Game::ExecuteCommand("asf2",Caller,Target);
+			}
+			else if (v2.HasCommand(FREEFORALERT))
+			{
+				Game::ExecuteCommand("asf3",Caller,Target);
+			}
+		}
+		else
+		{
+			Audio::PlaySample("mod:Audio/FX/Alarm/asf_nicht_verfügbar.wav");
+			return;
+		}
+	}
+};

@@ -1,0 +1,113 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Freeplay InBase - Script v1.0									                                    //
+// ************************************************							                            //
+//													                                                    //
+//	1.0| DUMMYFPSetInBaseTrue									                                        //
+//	   |												                                                //
+//	1.1| DUMMYFPSetInBaseFalse									                                        //
+//	   |												                                                //
+//	2.0| DUMMYFPIsInBase										                                        //
+//													                                                    //
+// _____________________										                                        //
+// a-rescue und Magicman mŸssen in der Readme genannt werden & der Kommentar muss so bleiben.		    //
+// Sonst freie Nutzung fŸr alle.									                                    //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char INBASE_TRUE[]  = "DUMMYFPSetInBaseTrue";
+const char INBASE_FALSE[] = "DUMMYFPSetInBaseFalse";
+const char INBASE[]       = "DUMMYFPIsInBase";
+
+int DummyGroup            = 38;
+
+// 1.0
+object DUMMYFPSetInBaseTrue : CommandScript
+{ 
+	DUMMYFPSetInBaseTrue()
+	{
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		if (Caller->GetType() == ACTOR_VEHICLE)
+		{
+			Vehicle v(Caller);
+			
+			if (!v.HasCommand(INBASE))
+			{
+				v.AssignCommand(INBASE);
+				v.SetParking(true);
+			}
+		}
+	}
+};
+
+// 1.1
+object DUMMYFPSetInBaseFalse : CommandScript
+{ 
+	DUMMYFPSetInBaseFalse()
+	{
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		if (Caller->GetType() == ACTOR_VEHICLE)
+		{
+			Vehicle v(Caller);
+			
+			if (v.HasCommand(INBASE))
+			{
+				v.RemoveCommand(INBASE);
+				v.SetParking(false);
+			}
+		}
+	}
+};
+
+// 2.0
+object DUMMYFPIsInBase : CommandScript
+{
+ 	DUMMYFPIsInBase()
+ 	{
+ 		SetGroupID(DummyGroup);
+ 	}
+ 
+ 	bool CheckGroupVisibility(GameObject *Caller)
+ 	{
+ 		return false;
+ 	}
+ 
+ 	bool CheckPossible(GameObject *Caller)
+ 	{
+ 		return false;
+ 	}
+ 
+ 
+ 	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+ 	{
+ 		return false;
+ 	}
+ 
+ 	void PushActions(GameObject *Caller, Actor *Target, int childID)
+ 	{
+ 	}
+};

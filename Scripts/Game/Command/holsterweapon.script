@@ -1,0 +1,43 @@
+const char ARREST[] 		= "Arrest";
+const char ARREST2[] 		= "Arrest2";
+
+
+object HolsterWeapon : CommandScript
+{
+
+	HolsterWeapon()
+	{
+		SetValidTargets(ACTOR_PERSON);
+		SetDoubleClickable(true);
+		SetGroupID(CGROUP_DRAW_WEAPON);
+		SetRestrictions(RESTRICT_SELFEXECUTE);
+		SetDeselectCaller(false);
+		SetPriority(700);
+	}
+
+	bool CheckGroupVisibility(GameObject *Caller)
+	{
+		if(!Caller->IsValid() || Caller->GetType() != ACTOR_PERSON)
+			return false;
+		return Caller->GetEquipment()==EQUIP_PISTOL;
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		if(!Caller->IsValid() || !Target->IsValid() || Target->GetID() != Caller->GetID())
+			return false;
+
+		if(Caller->GetEquipment()==EQUIP_PISTOL)
+			return true;
+
+		return false;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+	        Person p(Caller);
+		Caller->PushActionEquipWeapon(ACTION_NEWLIST, false);
+		p.RemoveCommand(ARREST2);
+		p.AssignCommand(ARREST);
+	}
+};

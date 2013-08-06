@@ -1,0 +1,111 @@
+//**************************************************************************************************
+// #Version 2.0#										****
+//												****
+// 		Changes: - Disables Sirens after arriving targetpoint.				****
+//												****
+//												****
+// 		DO NEVER REPLACE ORIGINAL SCRIPTS USED BY EM4 IN YOUR DATA-FOLDER!		****
+//**************************************************************************************************
+
+const char DUMMY_DISABLE[] = "DUMMYDisableSiren";
+
+object GoHome : CommandScript
+{
+	bool deinstall;
+
+	GoHome()
+	{
+		SetValidTargets(ACTOR_VEHICLE);
+		SetRestrictions(RESTRICT_SELFEXECUTE);
+	}
+	
+	bool CheckPossible(GameObject *Caller)
+	{
+		if (!Caller->IsValid())
+			return false;
+		if (Caller->GetType()==ACTOR_VEHICLE)
+		{
+			Vehicle v(Caller);
+			if (/*v.HasTransportOnStretcher() || */ v.IsDecontaminating())
+				return false;
+			if (v.IsInstalled())
+			{
+				if (v.GetVehicleType() == VT_THW_FGRR_BKF && (!v.IsReady() || v.GetCarriedObjects().GetNumObjects()>0))
+					return false;
+				if (v.GetVehicleType() == VT_FIREFIGHTERS_DLK && /*(v.GetInstallTargetID() != -1 ||*/ v.IsUplifting())//)
+					return false;
+				if (v.GetVehicleType() == VT_FIREFIGHTERS_GTF)
+					return false;
+			}
+		}
+		return true;
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		if (!Caller->IsValid() || !Target->IsValid() || Target->GetID() != Caller->GetID())
+			return false;
+		
+		deinstall = false;
+		Vehicle v(Caller);
+		SetPriority(0);
+		if ((v.GetVehicleType() == VT_AMBULANCE_RTW || v.GetVehicleType() == VT_AMBULANCE_ITW || v.GetVehicleType() == VT_AMBULANCE_RHC) && v.GetNumTransported() > 0)
+			SetPriority(105);
+		if (v.IsInstalled())
+		{
+			if (v.GetVehicleType() == VT_THW_FGRR_BKF && (!v.IsReady() || v.GetCarriedObjects().GetNumObjects()>0))
+				return false;
+			if (v.GetVehicleType() == VT_FIREFIGHTERS_DLK && /*(v.GetInstallTargetID() != -1 ||*/ v.IsUplifting())//)
+				return false;
+			if (v.GetVehicleType() == VT_FIREFIGHTERS_GTF)
+				return false;
+			deinstall = true;
+		}
+		
+		if (v.IsDecontaminating())
+		   	return false;
+		
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		if (!deinstall)
+		{
+			Vehicle v(Caller);
+			if (v.IsLightOn())
+			{
+				Caller->PushActionLightOn(ACTION_NEWLIST, false);
+				Caller->PushActionReturnToBase(ACTION_APPEND);
+				Caller->PushActionExecuteCommand(ACTION_APPEND, DUMMY_DISABLE, Caller, 2, false);
+				return;
+			}
+
+			if (v.GetVehicleType() == VT_THW_FGRT_BH && v.HasTransportOnStretcher())
+			{
+				ScriptInterface::ShowMessageTickerTextForSinglePlayer(Caller, "HINT_FGRT_NOBACKTOBASE");
+				return;
+				
+			}
+
+			Caller->PushActionReturnToBase(ACTION_NEWLIST);
+			Caller->PushActionExecuteCommand(ACTION_APPEND, DUMMY_DISABLE, Caller, 2, false);
+		} else
+		  {
+			Vehicle v(Caller);
+			if (v.GetVehicleType() == VT_FIREFIGHTERS_DLK && v.IsUplifted())
+			{
+				Caller->PushActionBasketDown(ACTION_NEWLIST, Vector(0.f, 0.f, 0.f));
+				Caller->PushActionDeinstall(ACTION_APPEND);
+				Caller->PushActionReturnToBase(ACTION_APPEND);
+				Caller->PushActionExecuteCommand(ACTION_APPEND, DUMMY_DISABLE, Caller, 2, false);
+			} else
+			  {
+				Caller->PushActionDeinstall(ACTION_NEWLIST);
+				Caller->PushActionReturnToBase(ACTION_APPEND);
+				Caller->PushActionExecuteCommand(ACTION_APPEND, DUMMY_DISABLE, Caller, 2, false);
+			  }
+		  }
+	}	
+
+};

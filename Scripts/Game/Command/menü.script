@@ -1,0 +1,222 @@
+/////////////////////////////////////////////////////////////////////
+//  Alarmierungs-Menü-Script von Florian Hagen                  	//
+//  Erstellt beim Disponenten 4 Alarmierungsgruppen (Polizei, Feuerwehr, Rettungsdienst und Technik) //
+//  Der Dispo muss dabei die Commands Feuerwehr_menue,		   //
+//  Rettungsdienst_menue, Polizei_menue und Technik_menue haben	   //
+//   								   //
+//  Frei für alle verwendbar solange dieser Block erhalten bleibt  //
+//                                                             	//
+//  Bei Verwendung in anderen Mods bitte PN und ReadMe-Eintrag	//
+//								   //
+/////////////////////////////////////////////////////////////////////
+
+object Feuerwehr_menue : CommandScript
+{
+	Feuerwehr_menue()
+	{
+		SetIcon("feuerwehr");
+		SetCursor("feuerwehr");
+		SetGroupID(CGROUP_GETEQUIPMENT);
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{	
+		Caller->RemoveCommand("Feuerwehr_menue");
+		Caller->RemoveCommand("Rettungsdienst_menue");
+		Caller->RemoveCommand("Polizei_menue");
+		Caller->RemoveCommand("Technik_menue");
+		Caller->AssignCommand("mtw");
+		Caller->AssignCommand("lf");
+		Caller->AssignCommand("dlk");
+		Caller->AssignCommand("menue_schliessen_Feuerwehr");
+	}
+};
+
+object Rettungsdienst_menue : CommandScript
+{
+	Rettungsdienst_menue()
+	{
+		SetIcon("rettungsdienst");
+		SetCursor("rettungsdienst");
+		SetGroupID(CGROUP_GETEQUIPMENT);
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		return true;
+	}
+
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{	
+		Caller->RemoveCommand("Feuerwehr_menue");
+		Caller->RemoveCommand("Rettungsdienst_menue");
+		Caller->RemoveCommand("Polizei_menue");
+		Caller->RemoveCommand("Technik_menue");
+	    Caller->AssignCommand("nef");
+		Caller->AssignCommand("rtw");
+		Caller->AssignCommand("menue_schliessen_Rettungsdienst");
+	}
+};
+
+object Polizei_menue : CommandScript
+{
+	Polizei_menue()
+	{
+		SetIcon("polizei");
+		SetCursor("polizei");
+		SetGroupID(CGROUP_GETEQUIPMENT);
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		return true;
+	}
+
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{	
+		Caller->RemoveCommand("Feuerwehr_menue");
+		Caller->RemoveCommand("Rettungsdienst_menue");
+		Caller->RemoveCommand("Polizei_menue");
+		Caller->RemoveCommand("Technik_menue");
+		Caller->AssignCommand("stw");
+		Caller->AssignCommand("menue_schliessen_Polizei");
+	}
+};
+
+object Technik_menue : CommandScript
+{
+	Technik_menue()
+	{
+		SetIcon("technik");
+		SetCursor("technik");
+		SetGroupID(CGROUP_GETEQUIPMENT);
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		return true;
+	}
+
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{	
+		Caller->RemoveCommand("Feuerwehr_menue");
+		Caller->RemoveCommand("Rettungsdienst_menue");
+		Caller->RemoveCommand("Polizei_menue");
+		Caller->RemoveCommand("Technik_menue");
+		Caller->AssignCommand("tec");
+		Caller->AssignCommand("asf");
+		Caller->AssignCommand("menue_schliessen_Technik");
+	}
+};
+
+object menue_schliessen_Feuerwehr : CommandScript
+{
+	menue_schliessen_Feuerwehr()
+	{
+		SetIcon("schließen");
+		SetCursor("schließen");
+		SetGroupID(CGROUP_GETEQUIPMENT);
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{	
+		Caller->AssignCommand("Feuerwehr_menue");
+		Caller->AssignCommand("Rettungsdienst_menue");
+		Caller->AssignCommand("Polizei_menue");
+		Caller->AssignCommand("Technik_menue");
+		Caller->RemoveCommand("mtw");
+		Caller->RemoveCommand("lf");
+		Caller->RemoveCommand("dlk");
+		Caller->RemoveCommand("menue_schliessen_Feuerwehr");
+	}
+};
+
+object menue_schliessen_Rettungsdienst : CommandScript
+{
+	menue_schliessen_Rettungsdienst()
+	{
+		SetIcon("schließen");
+		SetCursor("schließen");
+		SetGroupID(CGROUP_GETEQUIPMENT);
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{	
+		Caller->AssignCommand("Feuerwehr_menue");
+		Caller->AssignCommand("Rettungsdienst_menue");
+		Caller->AssignCommand("Polizei_menue");
+		Caller->AssignCommand("Technik_menue");
+		Caller->RemoveCommand("nef");
+		Caller->RemoveCommand("rtw");
+		Caller->RemoveCommand("menue_schliessen_Rettungsdienst");
+	}
+};
+
+object menue_schliessen_Polizei : CommandScript
+{
+	menue_schliessen_Polizei()
+	{
+		SetIcon("schließen");
+		SetCursor("schließen");
+		SetGroupID(CGROUP_GETEQUIPMENT);
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{	
+		Caller->AssignCommand("Feuerwehr_menue");
+		Caller->AssignCommand("Rettungsdienst_menue");
+		Caller->AssignCommand("Polizei_menue");
+		Caller->AssignCommand("Technik_menue");
+		Caller->RemoveCommand("stw");
+		Caller->RemoveCommand("menue_schliessen_Polizei");
+	}
+};
+
+object menue_schliessen_Technik : CommandScript
+{
+	menue_schliessen_Technik()
+	{
+		SetIcon("schließen");
+		SetCursor("schließen");
+		SetGroupID(CGROUP_GETEQUIPMENT);
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{	
+		Caller->AssignCommand("Feuerwehr_menue");
+		Caller->AssignCommand("Rettungsdienst_menue");
+		Caller->AssignCommand("Polizei_menue");
+		Caller->AssignCommand("Technik_menue");
+		Caller->RemoveCommand("tec");
+		Caller->RemoveCommand("asf");
+		Caller->RemoveCommand("menue_schliessen_Technik");
+	}
+};

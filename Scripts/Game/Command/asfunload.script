@@ -1,0 +1,46 @@
+//Fachzug 22 Script												//
+//Version 1.2													//
+//Frei verwendbar, solang diese Kommentare erhalten bleiben		//
+//und per PN oder E-Mail eine schriftliche Erlaubniss vorliegt	//
+//Version 1.2													//
+//Fachzug 22 Script												//
+
+object asfunload : CommandScript
+{
+	asfunload()
+	{
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+	return true;
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		Vehicle v(Caller);
+
+		//ERMITTELN DES GAMEOBJECTS DES GELADENEN FAHRZEUGS:
+		GameObjectList ol = Caller->GetCarriedObjects();
+		GameObject * FzgObj = ol.GetObject(0);
+
+		//ABLADEN DES GELADENEN FAHRZEUGS:
+		v.PushActionUnload(ACTION_NEWLIST);
+
+		// ALLE ERMITTELTEN GAMEOBJECTS DURCHGEHEN (IST ZWAR IMMER NUR EINS PRO ASF ABER SICHER IST SICHER)
+		for (int i = 0; i < ol.GetNumObjects(); i++)
+		{
+      		 // GAMEOBJECT LÖSCHEN:
+		ol.GetObject(i)->PushActionWait(ACTION_APPEND, 10);
+		ol.GetObject(i)->PushActionDeleteOwner(ACTION_APPEND);
+				{
+				Caller->PushActionExecuteCommand(ACTION_APPEND, "VCmdFPGoHome", Caller, 1, true);
+				}
+		}
+	}
+};

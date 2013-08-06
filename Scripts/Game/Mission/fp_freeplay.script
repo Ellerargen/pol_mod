@@ -1,0 +1,421 @@
+// Freeplay-Start (Grundgeruest + Einstellungs-Codeblock für Fahrzeuge und Personal)
+
+void Start()
+{
+	GameObjectList l1;
+	GameObject *o1;
+
+//// <BLOCK> ////////////////////////////////////////////////////////////////////////////////////////////
+	
+	l1 = Game::GetGameObjects("fpolizei");	// FAHRZEUGNAME muss einmalig sein auf der Map
+	
+	if(l1.GetNumObjects() == 0)
+	{
+		Mission::PlayHint("23/8 befindet sich nicht auf der Karte!"); 				// *
+	}
+	else
+	{
+		o1 = *l1.GetObject(0);
+		Vehicle v(o1);
+	
+		v.SetSpeed(12.0f);
+		v.SetMaxPassengers(4);
+		v.SetMaxTransports(4);
+		v.EnableBlueLights(false);
+		v.EnableBreakLights(false);
+		v.EnableSpecialLights(false);
+		v.EnableHeadLights(false);
+		v.SetCommandable(false);
+		v.AssignCommand("DUMMYFPIsFreeForAlert");
+		v.AssignCommand("DUMMYFPIsInBase");
+		v.AssignCommand("VCmdFPGoHome");
+	}
+
+//// </BLOCK> ///////////////////////////////////////////////////////////////////////////////////////////
+//// <BLOCK> ////////////////////////////////////////////////////////////////////////////////////////////
+	
+	l1 = Game::GetGameObjects("fstw1");	// FAHRZEUGNAME muss einmalig sein auf der Map
+	
+	if(l1.GetNumObjects() == 0)
+	{
+		Mission::PlayHint("STW1 befindet sich nicht auf der Karte!"); 				// *
+	}
+	else
+	{
+		o1 = *l1.GetObject(0);
+		Vehicle v(o1);
+	
+		v.SetSpeed(14.0f);
+		v.SetMaxPassengers(2);
+		v.SetMaxTransports(2);
+		v.EnableBlueLights(false);
+		v.EnableBreakLights(false);
+		v.EnableSpecialLights(false);
+		v.EnableHeadLights(false);
+		v.SetCommandable(false);
+		v.AssignCommand("DUMMYFPIsFreeForAlert");
+		v.AssignCommand("DUMMYFPIsInBase");
+		v.AssignCommand("VCmdFPGoHome");
+	}
+
+//// </BLOCK> ///////////////////////////////////////////////////////////////////////////////////////////
+//// <BLOCK> ////////////////////////////////////////////////////////////////////////////////////////////
+	
+	l1 = Game::GetGameObjects("fstw2");	// FAHRZEUGNAME muss einmalig sein auf der Map
+	
+	if(l1.GetNumObjects() == 0)
+	{
+		Mission::PlayHint("STW2 befindet sich nicht auf der Karte!"); 				// *
+	}
+	else
+	{
+		o1 = *l1.GetObject(0);
+		Vehicle v(o1);
+	
+		v.SetSpeed(14.0f);
+		v.SetMaxPassengers(2);
+		v.SetMaxTransports(2);
+		v.EnableBlueLights(false);
+		v.EnableBreakLights(false);
+		v.EnableSpecialLights(false);
+		v.EnableHeadLights(false);
+		v.SetCommandable(false);
+		v.AssignCommand("DUMMYFPIsFreeForAlert");
+		v.AssignCommand("DUMMYFPIsInBase");
+		v.AssignCommand("VCmdFPGoHome");
+	}
+
+//// </BLOCK> ///////////////////////////////////////////////////////////////////////////////////////////
+//// <BLOCK> ////////////////////////////////////////////////////////////////////////////////////////////
+	
+	l1 = Game::GetGameObjects("fmtw");	// FAHRZEUGNAME muss einmalig sein auf der Map
+	
+	if(l1.GetNumObjects() == 0)
+	{
+		Mission::PlayHint("MTW befindet sich nicht auf der Karte!"); 				// *
+	}
+	else
+	{
+		o1 = *l1.GetObject(0);
+		Vehicle v(o1);
+	
+		v.SetSpeed(12.0f);
+		v.SetMaxPassengers(9);
+		v.SetMaxTransports(0);
+		v.EnableBlueLights(false);
+		v.EnableBreakLights(false);
+		v.EnableSpecialLights(false);
+		v.EnableHeadLights(false);
+		v.SetCommandable(false);
+		v.AssignCommand("DUMMYFPIsFreeForAlert");
+		v.AssignCommand("DUMMYFPIsInBase");
+		v.AssignCommand("VCmdFPGoHome");
+	}
+
+//// </BLOCK> ///////////////////////////////////////////////////////////////////////////////////////////
+//// <BLOCK> ////////////////////////////////////////////////////////////////////////////////////////////
+	
+	l1 = Game::GetGameObjects("flf");	// FAHRZEUGNAME muss einmalig sein auf der Map
+	
+	if(l1.GetNumObjects() == 0)
+	{
+		Mission::PlayHint("LF befindet sich nicht auf der Karte!"); 				// *
+	}
+	else
+	{
+		o1 = *l1.GetObject(0);
+		Vehicle v(o1);
+	
+		v.SetSpeed(10.0f);
+		v.SetMaxPassengers(6);
+		v.SetMaxTransports(0);
+		v.EnableBlueLights(false);
+		v.EnableBreakLights(false);
+		v.EnableSpecialLights(false);
+		v.EnableHeadLights(false);
+		v.SetCommandable(false);
+		v.AssignCommand("DUMMYFPIsFreeForAlert");
+		v.AssignCommand("DUMMYFPIsInBase");
+		v.AssignCommand("VCmdFPGoHome");
+	}
+
+//// </BLOCK> ///////////////////////////////////////////////////////////////////////////////////////////
+//// <BLOCK> ////////////////////////////////////////////////////////////////////////////////////////////
+	
+	l1 = Game::GetGameObjects("fdlk");	// FAHRZEUGNAME muss einmalig sein auf der Map
+	
+	if(l1.GetNumObjects() == 0)
+	{
+		Mission::PlayHint("DLK befindet sich nicht auf der Karte!"); 				// *
+	}
+	else
+	{
+		o1 = *l1.GetObject(0);
+		Vehicle v(o1);
+	
+		v.SetSpeed(9.0f);
+		v.SetMaxPassengers(3);
+		v.SetMaxTransports(0);
+		v.EnableBlueLights(false);
+		v.EnableBreakLights(false);
+		v.EnableSpecialLights(false);
+		v.EnableHeadLights(false);
+		v.SetCommandable(false);
+		v.AssignCommand("DUMMYFPIsFreeForAlert");
+		v.AssignCommand("DUMMYFPIsInBase");
+		v.AssignCommand("VCmdFPGoHome");
+	}
+
+//// </BLOCK> ///////////////////////////////////////////////////////////////////////////////////////////
+//// <BLOCK> ////////////////////////////////////////////////////////////////////////////////////////////
+	
+	l1 = Game::GetGameObjects("fnef");	// FAHRZEUGNAME muss einmalig sein auf der Map
+	
+	if(l1.GetNumObjects() == 0)
+	{
+		Mission::PlayHint("Nef befindet sich nicht auf der Karte!"); 				// *
+	}
+	else
+	{
+		o1 = *l1.GetObject(0);
+		Vehicle v(o1);
+	
+		v.SetSpeed(14.0f);
+		v.SetMaxPassengers(2);
+		v.SetMaxTransports(0);
+		v.EnableBlueLights(false);
+		v.EnableBreakLights(false);
+		v.EnableSpecialLights(false);
+		v.EnableHeadLights(false);
+		v.SetCommandable(false);
+		v.AssignCommand("DUMMYFPIsFreeForAlert");
+		v.AssignCommand("DUMMYFPIsInBase");
+		v.AssignCommand("VCmdFPGoHome");
+	}
+
+//// </BLOCK> ///////////////////////////////////////////////////////////////////////////////////////////
+//// <BLOCK> ////////////////////////////////////////////////////////////////////////////////////////////
+	
+	l1 = Game::GetGameObjects("frtw1");	// FAHRZEUGNAME muss einmalig sein auf der Map
+	
+	if(l1.GetNumObjects() == 0)
+	{
+		Mission::PlayHint("RTW1 befindet sich nicht auf der Karte!"); 				// *
+	}
+	else
+	{
+		o1 = *l1.GetObject(0);
+		Vehicle v(o1);
+	
+		v.SetSpeed(11.0f);
+		v.SetMaxPassengers(2);
+		v.SetMaxTransports(1);
+		v.EnableBlueLights(false);
+		v.EnableBreakLights(false);
+		v.EnableSpecialLights(false);
+		v.EnableHeadLights(false);
+		v.SetCommandable(false);
+		v.AssignCommand("DUMMYFPIsFreeForAlert");
+		v.AssignCommand("DUMMYFPIsInBase");
+		v.AssignCommand("VCmdFPGoHome");
+	}
+
+//// </BLOCK> ///////////////////////////////////////////////////////////////////////////////////////////
+//// <BLOCK> ////////////////////////////////////////////////////////////////////////////////////////////
+	
+	l1 = Game::GetGameObjects("frtw2");	// FAHRZEUGNAME muss einmalig sein auf der Map
+	
+	if(l1.GetNumObjects() == 0)
+	{
+		Mission::PlayHint("RTW2 befindet sich nicht auf der Karte!"); 				// *
+	}
+	else
+	{
+		o1 = *l1.GetObject(0);
+		Vehicle v(o1);
+	
+		v.SetSpeed(11.0f);
+		v.SetMaxPassengers(2);
+		v.SetMaxTransports(1);
+		v.EnableBlueLights(false);
+		v.EnableBreakLights(false);
+		v.EnableSpecialLights(false);
+		v.EnableHeadLights(false);
+		v.SetCommandable(false);
+		v.AssignCommand("DUMMYFPIsFreeForAlert");
+		v.AssignCommand("DUMMYFPIsInBase");
+		v.AssignCommand("VCmdFPGoHome");
+	}
+
+//// </BLOCK> ///////////////////////////////////////////////////////////////////////////////////////////
+//// <BLOCK> ////////////////////////////////////////////////////////////////////////////////////////////
+	
+	l1 = Game::GetGameObjects("frtw3");	// FAHRZEUGNAME muss einmalig sein auf der Map
+	
+	if(l1.GetNumObjects() == 0)
+	{
+		Mission::PlayHint("RTW3 befindet sich nicht auf der Karte!"); 				// *
+	}
+	else
+	{
+		o1 = *l1.GetObject(0);
+		Vehicle v(o1);
+	
+		v.SetSpeed(11.0f);
+		v.SetMaxPassengers(2);
+		v.SetMaxTransports(1);
+		v.EnableBlueLights(false);
+		v.EnableBreakLights(false);
+		v.EnableSpecialLights(false);
+		v.EnableHeadLights(false);
+		v.SetCommandable(false);
+		v.AssignCommand("DUMMYFPIsFreeForAlert");
+		v.AssignCommand("DUMMYFPIsInBase");
+		v.AssignCommand("VCmdFPGoHome");
+	}
+
+//// </BLOCK> ///////////////////////////////////////////////////////////////////////////////////////////
+//// <BLOCK> ////////////////////////////////////////////////////////////////////////////////////////////
+	
+	l1 = Game::GetGameObjects("ftec");	// FAHRZEUGNAME muss einmalig sein auf der Map
+	
+	if(l1.GetNumObjects() == 0)
+	{
+		Mission::PlayHint("Techniker befindet sich nicht auf der Karte!"); 			// *
+	}
+	else
+	{
+		o1 = *l1.GetObject(0);
+		Vehicle v(o1);
+	
+		v.SetSpeed(8.0f);
+		v.SetMaxPassengers(2);
+		v.SetMaxTransports(0);
+		v.EnableBlueLights(false);
+		v.EnableBreakLights(false);
+		v.EnableSpecialLights(false);
+		v.EnableHeadLights(false);
+		v.SetCommandable(false);
+		v.AssignCommand("DUMMYFPIsFreeForAlert");
+		v.AssignCommand("DUMMYFPIsInBase");
+		v.AssignCommand("VCmdFPGoHome");
+	}
+
+//// </BLOCK> ///////////////////////////////////////////////////////////////////////////////////////////
+//// <BLOCK> ////////////////////////////////////////////////////////////////////////////////////////////
+	
+	l1 = Game::GetGameObjects("fasf1");	// FAHRZEUGNAME muss einmalig sein auf der Map
+	
+	if(l1.GetNumObjects() == 0)
+	{
+		Mission::PlayHint("ASF1 befindet sich nicht auf der Karte!"); 				// *
+	}
+	else
+	{
+		o1 = *l1.GetObject(0);
+		Vehicle v(o1);
+	
+		v.SetSpeed(7.0f);
+		v.SetMaxPassengers(1);
+		v.SetMaxTransports(0);
+		v.EnableBlueLights(false);
+		v.EnableBreakLights(false);
+		v.EnableSpecialLights(false);
+		v.EnableHeadLights(false);
+		v.SetCommandable(false);
+		v.AssignCommand("DUMMYFPIsFreeForAlert");
+		v.AssignCommand("DUMMYFPIsInBase");
+		v.AssignCommand("VCmdFPGoHome");
+	}
+
+//// </BLOCK> ///////////////////////////////////////////////////////////////////////////////////////////
+//// <BLOCK> ////////////////////////////////////////////////////////////////////////////////////////////
+	
+	l1 = Game::GetGameObjects("fasf2");	// FAHRZEUGNAME muss einmalig sein auf der Map
+	
+	if(l1.GetNumObjects() == 0)
+	{
+		Mission::PlayHint("ASF2 befindet sich nicht auf der Karte!"); 				// *
+	}
+	else
+	{
+		o1 = *l1.GetObject(0);
+		Vehicle v(o1);
+	
+		v.SetSpeed(7.0f);
+		v.SetMaxPassengers(1);
+		v.SetMaxTransports(0);
+		v.EnableBlueLights(false);
+		v.EnableBreakLights(false);
+		v.EnableSpecialLights(false);
+		v.EnableHeadLights(false);
+		v.SetCommandable(false);
+		v.AssignCommand("DUMMYFPIsFreeForAlert");
+		v.AssignCommand("DUMMYFPIsInBase");
+		v.AssignCommand("VCmdFPGoHome");
+	}
+
+//// </BLOCK> ///////////////////////////////////////////////////////////////////////////////////////////
+//// <BLOCK> ////////////////////////////////////////////////////////////////////////////////////////////
+	
+	l1 = Game::GetGameObjects("fasf3");	// FAHRZEUGNAME muss einmalig sein auf der Map
+	
+	if(l1.GetNumObjects() == 0)
+	{
+		Mission::PlayHint("ASF3 befindet sich nicht auf der Karte!"); 				// *
+	}
+	else
+	{
+		o1 = *l1.GetObject(0);
+		Vehicle v(o1);
+	
+		v.SetSpeed(7.0f);
+		v.SetMaxPassengers(1);
+		v.SetMaxTransports(0);
+		v.EnableBlueLights(false);
+		v.EnableBreakLights(false);
+		v.EnableSpecialLights(false);
+		v.EnableHeadLights(false);
+		v.SetCommandable(false);
+		v.AssignCommand("DUMMYFPIsFreeForAlert");
+		v.AssignCommand("DUMMYFPIsInBase");
+		v.AssignCommand("VCmdFPGoHome");
+	}
+
+//// </BLOCK> ///////////////////////////////////////////////////////////////////////////////////////////
+		
+		GameObject *ofz;
+		GameObjectList lfz;
+
+
+		lfz=Game::GetGameObjects("fpolizei");
+		if(lfz.GetNumObjects() > 0)
+		{
+			ofz = *lfz.GetObject(0);
+			Game::AddToGroup(ofz,0);
+			System::Log("Erfolgreich: Disponent-Gruppe 1 wurde erfolgreich eingerichtet!");
+		}
+		else Mission::PlayHint("Disponent-Fehler: Disponent-Gruppe 1 wurde nicht gefunden!");
+
+
+		lfz=Game::GetGameObjects("leitstelle argen");
+		if(lfz.GetNumObjects() > 0)
+		{
+			ofz = *lfz.GetObject(0);
+			Game::AddToGroup(ofz,1);
+			System::Log("Erfolgreich: Disponent-Gruppe 2 wurde erfolgreich eingerichtet!");
+		}
+		else Mission::PlayHint("Disponent-Fehler: Disponent-Gruppe 2 wurde nicht gefunden!");
+
+
+		Game::ShowHelpTextWindow("Herzlich willkommen in Ellerargen! Machen Sie sich bereit, Ihre Schicht beginnt nun!");
+
+
+};
+
+bool OnLoad()
+{
+	Start();
+	Process::Kill();
+	return true;
+}

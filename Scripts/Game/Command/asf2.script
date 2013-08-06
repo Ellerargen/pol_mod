@@ -1,0 +1,183 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Freeplay Alarm ASF2 - Script v1.0									                                    //
+// ************************************************							                            //
+//													                                                    //
+//	1.0| PCmdFPAlarmASF2										                                            //
+//													                                                    //
+// _____________________										                                        //
+// a-rescue und Magicman mŸssen in der Readme genannt werden & der Kommentar muss so bleiben.		    //
+// Sonst freie Nutzung fŸr alle.									                                    //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+const char IMG_ICON[]           = "asf";  // Name des Icons
+const char IMG_CURSOR[]         = "asf";  // Name des Cursors
+
+const char COMMANDABLE_TRUE[]   = "DUMMYSetCommandableTrue";
+const char COMMANDABLE_FALSE[]  = "DUMMYSetCommandableFalse";
+
+const char FREEFORALERT_TRUE[]  = "DUMMYFPSetFreeForAlertTrue";
+const char FREEFORALERT_FALSE[] = "DUMMYFPSetFreeForAlertFalse";
+const char FREEFORALERT[]       = "DUMMYFPIsFreeForAlert";
+
+const char INBASE_TRUE[]        = "DUMMYFPSetInBaseTrue";
+const char INBASE_FALSE[]       = "DUMMYFPSetInBaseFalse";
+const char INBASE[]             = "DUMMYFPIsInBase";
+
+// 1.0
+object asf2 : CommandScript  // Name des Commands
+{
+	asf2()               // Name des Commands
+	{
+		SetIcon(IMG_ICON);
+		SetCursor(IMG_CURSOR);
+		SetPossibleCallers(ACTOR_PERSON);
+		SetGroupID(CGROUP_GETEQUIPMENT);
+		SetValidTargets(ACTOR_FLOOR | ACTOR_STREET);
+	}
+	
+	bool CheckPossible(GameObject *Caller)
+	{
+		GameObjectList ol;
+		GameObject *o;
+		ol = Game::GetGameObjects("fasf2"); //Name des zu alarmierenden Fahrzeuges
+		o = *ol.GetObject(0);
+		Vehicle v(o);
+
+		if (!v.HasCommand(FREEFORALERT))
+			return false;
+			
+		return true;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		if (Caller->GetID() == Target->GetID())
+			return false;
+			
+		return true;
+	}
+	
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		GameObjectList ol;
+		GameObject *o;
+		ActorList al;
+		Actor spawnpoint;
+		Vector spawnpos;
+		float rot[9];
+		float childRot[9];
+		Vector tpos;
+		PersonList pl;
+        Person p;   
+        ActorList al;
+		Actor spawnpoint;
+		Vector spawnpos;
+
+		ol = Game::GetGameObjects("fasf2");  //Name des zu alarmierenden Fahrzeuges
+		o = *ol.GetObject(0);
+		Vehicle v(o);
+
+		if (v.IsDestroyed())
+		{
+			Audio::PlaySample("mod:Audio/FX/Alarm/asf_nicht_verfügbar.wav");  //Pfad zum Alarmsound der abspielt werden soll
+			return;
+		}
+
+		if (!v.HasCommand(FREEFORALERT))
+		{
+			Audio::PlaySample("mod:Audio/FX/Alarm/asf_nicht_verfügbar.wav");  //Pfad zum Alarmsound der abspielt werden soll
+			return;
+		}
+		else
+		{
+			Audio::PlaySample("mod:Audio/FX/Alarm/asf_verfügbar.wav");  //Pfad zum Alarmsound der abspielt werden soll
+
+			v.PushActionExecuteCommand(ACTION_NEWLIST, FREEFORALERT_FALSE, &v, 1, true);
+
+            al=Game::GetActors("ttec");  //Name des viruelles Objektes wo die EinsatzkrŠfte erstellt werden soll
+			if(al.GetNumActors() > 0)
+			{
+				spawnpoint = *al.GetActor(0);
+				spawnpos   = spawnpoint.GetPosition();
+			}
+			else
+			{
+				Mission::PlayHint("Kann Eingang für Personal nicht finden!");
+				return;
+			}
+
+			bool ob_personal = false;
+			pl = v.GetPassengers();
+			for(int i=0; i < pl.GetNumPersons(); i++)
+			{
+				if (pl.GetPerson(i)->HasCommand("entercar"))
+				{
+					ob_personal = true;
+				}
+			}
+
+			bool vinbase = false;
+			if(v.HasCommand(INBASE))
+			{
+				vinbase = true;
+			}
+
+//Personal Block/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			if (!ob_personal && vinbase)
+			{
+				p = Game::CreatePerson("mod:Prototypes/Persons/TEC/engineer.e4p","fasf2");  //Pfad zum Prototyp der Einsatzkraft & Name der Einsatzkraft (wie Fahrzeug)
+				p.GetRotation(rot[0], rot[1], rot[2], rot[3], rot[4], rot[5], rot[6], rot[7], rot[8]);
+				Math::EulerToMatrix(0.f, 0.f, 0.f, childRot);
+				Math::MultiplyMatrices(childRot, rot);
+				p.SetRotation(childRot[0], childRot[1], childRot[2], childRot[3], childRot[4], childRot[5], childRot[6], childRot[7], childRot[8]);
+				GameObject *px(p);
+				Game::FindFreePosition(px, spawnpos, 100);
+				p.SetPosition(spawnpos);
+				p.PushActionExecuteCommand(ACTION_NEWLIST, COMMANDABLE_FALSE, &p, 1, true);
+				p.PushActionExecuteCommand(ACTION_APPEND, COMMANDABLE_TRUE, &p, 1, true);
+				p.PushActionExecuteCommand(ACTION_APPEND, "entercar", o, 0, false);
+			}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//FŸr weitere EinsatzkrŠfte einfach neue Blšcke hier hinzufŸgen
+
+
+			bool ready = false;
+			if (ob_personal)
+			{
+				ready= true;
+			}
+
+			if (vinbase)
+			{
+				v.PushActionWait(ACTION_APPEND, 25.0);  // Zeit zum Einsteigen bevor Fahrzeug wegfährt
+
+			}
+
+			if (!ready && !vinbase))
+			{
+				Mission::PlayHint("Ohne Personal, Einsatz nicht möglich!");
+			}
+
+			v.PushActionExecuteCommand(ACTION_APPEND, COMMANDABLE_TRUE, &v, 1, true);
+
+			if(!v.HasCommand("DUMMYHasSiren"))
+			{
+				v.PushActionExecuteCommand(ACTION_APPEND, "VCmdSirenAlle", o, 0, false);
+			}
+
+			v.PushActionExecuteCommand(ACTION_APPEND, INBASE_FALSE, &v, 1, true);
+
+			if (ready && !vinbase))
+			{
+                       		if(!v.HasCommand("DUMMYHasSiren"))
+			    {
+					v.PushActionExecuteCommand(ACTION_APPEND, "VCmdSirenAlle", o, 0, false);
+			    }
+			} 
+			tpos = Game::GetCommandPos();
+			v.PushActionMove(ACTION_APPEND, tpos);
+			v.PushActionExecuteCommand(ACTION_APPEND, "emptycar", o, 0, false);
+		}
+	}
+};

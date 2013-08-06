@@ -1,0 +1,293 @@
+//**************************************************************************************************
+// #Version 2.0#										****
+//												****
+// 		Includes: all Sirens								****
+//												****
+//	1.0| VCmdSiren										****
+//	1.1| DUMMYUpdatePos									****
+//	1.2| DUMMYDisableSiren									****
+//	1.3| DUMMYFindPath									****
+//	1.4| DUMMYHasSiren									****
+//												****
+// childID 1 for disabling bluelights.								****
+//												****
+//												****
+//**************************************************************************************************
+
+// Hier kann man den Namen eines Icons für die Commandleiste angeben.
+// Wird automatisch aus den Ordnern UI/Game/Icons/Command/ und UI/Game/Icons/Cursor genommen.
+const char IMG[] = "sosistadt";
+
+const char EACTION_FINDPATH[] = "EActionFindPath";
+
+const char DUMMY_HASSIREN[] = "DUMMYHasSiren";
+const char DUMMY_UPDATEPOS[] = "DUMMYUpdatePos";
+const char DUMMY_FINDPATH[] = "DUMMYFindPath";
+
+const char CMD_MOVETO[] = "MoveTo";
+
+const char NAME_DUMMYOBJECT[] = "HelpingObjekt_Roger";
+
+// Polizei
+
+const char PROTO_POL_POLIZEI[] = "mod:Prototypes/Vehicles/Polizei/Polizei.e4p";
+
+int DummyGroup = 20;
+
+// 01.0
+object VCmdSirenStadt : CommandScript
+{
+	VCmdSirenStadt()
+	{
+		SetIcon(IMG);
+		SetCursor(IMG);
+		SetRestrictions(RESTRICT_SELFEXECUTE);
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		if (!Caller->IsValid())
+			return false;
+
+		if (Caller->GetType() == ACTOR_VEHICLE)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		if (!Target->IsValid() || Target->GetID() != Caller->GetID())
+			return false;
+
+		if (!Caller->HasCommand(CMD_MOVETO) || Caller->GetType() != ACTOR_VEHICLE)
+			return false;
+
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		Vehicle v(Caller);
+		if (!v.HasCommand(DUMMY_HASSIREN) && (childID != 2 && childID != 1))
+		{
+
+			int soundID;
+			v.EnableBlueLights(true);
+			Vector CarPos = v.GetPosition();
+
+				// Hier die const char Namen von oben eintragen wie in den beiden Beispielen unten.
+
+				// Polizei
+				
+				if (StrCompare(v.GetPrototypeFileName(), PROTO_POL_POLIZEI) == 0)
+				{
+					soundID = Audio::PlaySample3D("mod:Audio/FX/Sirens/stadtsirene.wav", CarPos, true);
+				}
+
+				GameObject mDummy =  Game::CreateObject("mod:Prototypes/Objects/Misc/empty.e4p", NAME_DUMMYOBJECT);
+
+				mDummy.Hide();
+				mDummy.SetPosition(CarPos);
+				mDummy.SetUserData(soundID);
+				mDummy.PushActionExecuteCommand(ACTION_NEWLIST, DUMMY_UPDATEPOS, &v, soundID, false);
+				v.SetUserData(soundID);
+				v.AssignCommand(DUMMY_HASSIREN);
+
+			return;
+		}
+
+		if (v.HasCommand(DUMMY_HASSIREN))
+		{
+			if (childID == 1)
+			{
+				v.EnableBlueLights(false);
+			}
+
+			if (v.HasCommand(DUMMY_HASSIREN))
+			{
+				int ref = Caller->GetUserData();
+				Audio::StopSample(ref);
+
+				GameObjectList list = Game::GetGameObjects(NAME_DUMMYOBJECT);
+				for(int i=0; i<list.GetNumObjects(); i++)
+				{
+					GameObject *obj = list.GetObject(i);
+					if (obj->GetUserData() == ref)
+					{
+						int mSirTest = i;
+					}
+				}
+
+				GameObject *obj = list.GetObject(mSirTest);
+				obj->PushActionDeleteOwner(ACTION_NEWLIST);
+				v.RemoveCommand(DUMMY_HASSIREN);
+			}
+
+			return;
+		}
+	}
+};
+
+// 01.1
+object DUMMYUpdatePos : CommandScript
+{
+	DUMMYUpdatePos()
+	{
+		SetGroupID(DummyGroup);
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+	}
+
+  	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		Vehicle v(Target);
+		GameObject mDummy(Caller);
+		Vector CarPos = v.GetPosition();
+
+		if (v.IsDestroyed() || !v.IsValid())
+		{
+			int ref = mDummy.GetUserData();
+			Audio::StopSample(ref);
+
+			mDummy.PushActionDeleteOwner(ACTION_NEWLIST);
+		} else
+		  {
+			mDummy.SetPosition(CarPos);
+			Audio::UpdatePos(childID, CarPos, true);
+			if (v.IsCurrentAction(EACTION_FINDPATH))
+			{
+				if (!v.HasCommand(DUMMY_FINDPATH))
+				{
+					v.AssignCommand(DUMMY_FINDPATH);
+				}
+			}
+			mDummy.PushActionExecuteCommand(ACTION_NEWLIST, DUMMY_UPDATEPOS, Target, childID, false);
+		  }
+
+		if (v.HasCommand(DUMMY_FINDPATH))
+		{
+			if (!v.IsCurrentAction(EACTION_FINDPATH) && v.GetNumActions() == 0)
+			{
+				v.RemoveCommand(DUMMY_HASSIREN);
+				v.RemoveCommand(DUMMY_FINDPATH);
+
+				int ref = Caller->GetUserData();
+				Audio::StopSample(ref);
+
+				GameObjectList list = Game::GetGameObjects(NAME_DUMMYOBJECT);
+				for(int i = 0; i < list.GetNumObjects(); i++)
+				{
+					GameObject *obj = list.GetObject(i);
+					if (obj->GetUserData() == ref)
+					{
+						int mSirTest = i;
+
+						GameObject *obj = list.GetObject(mSirTest);
+						obj->PushActionDeleteOwner(ACTION_NEWLIST);
+						v.RemoveCommand(DUMMY_HASSIREN);
+						if (v.HasCommand(DUMMY_FINDPATH))
+						{
+							v.RemoveCommand(DUMMY_FINDPATH);
+						}
+					}
+				}
+			}
+		}
+	}
+};
+
+// 01.2
+object DUMMYDisableSiren : CommandScript
+{
+	DUMMYDisableSiren()
+	{
+		SetGroupID(DummyGroup);
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+	}
+
+  	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		Vehicle v(Caller);
+
+		if (childID == 1)
+		{
+			v.EnableBlueLights(false);
+		}
+
+		int ref = Caller->GetUserData();
+		Audio::StopSample(ref);
+
+		GameObjectList list = Game::GetGameObjects(NAME_DUMMYOBJECT);
+		for(int i = 0; i < list.GetNumObjects(); i++)
+		{
+			GameObject *obj = list.GetObject(i);
+			if (obj->GetUserData() == ref)
+			{
+				int mSirTest = i;
+
+				GameObject *obj = list.GetObject(mSirTest);
+				obj->PushActionDeleteOwner(ACTION_NEWLIST);
+				v.RemoveCommand(DUMMY_HASSIREN);
+				if (v.HasCommand(DUMMY_FINDPATH))
+				{
+					v.RemoveCommand(DUMMY_FINDPATH);
+				}
+			}
+		}
+	}
+};
+
+// 01.3
+object DUMMYFindPath : CommandScript
+{
+	DUMMYFindPath()
+	{
+		SetGroupID(DummyGroup);
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		return false;
+	}
+
+  	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+	}
+};
+
+// 01.4
+object DUMMYHasSiren : CommandScript
+{
+	DUMMYHasSiren()
+	{
+		SetGroupID(DummyGroup);
+	}
+
+	bool CheckGroupVisibility(GameObject *Caller)
+	{
+		return false;
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		return false;
+	}
+
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		return false;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+	}
+};

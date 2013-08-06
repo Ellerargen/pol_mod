@@ -1,0 +1,59 @@
+object RemoveEquipment: CommandScript
+{
+	RemoveEquipment()
+	{
+		SetIcon("drop");
+		SetCursor("drop");
+		SetValidTargets(ACTOR_PERSON);
+		SetDoubleClickable(true);
+		SetRestrictions(RESTRICT_SELFEXECUTE);
+		SetNeedsConnectedHose(CFN_FAIL);
+		SetDeselectCaller(false);
+		SetPriority(600);
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		if(!Caller->IsValid() || Caller->GetType() != ACTOR_PERSON)
+			return false;
+		Person p(Caller);
+		if(p.IsCommandEnabled("HolsterWeapon") && p.GetEquipment() == EQUIP_PISTOL)
+			return false;
+		if (p.GetEquipment() == EQUIP_REDIRECTSIGN)
+			return false;
+		return p.GetEquipment()!=EQUIP_NONE || Caller->HasCommand("Dummy3Cones")|| Caller->HasCommand("Dummy2Cones") || Caller->HasCommand("Dummy1Cone");
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		if (!Caller->IsValid() || !Target->IsValid() || Caller->GetID()!=Target->GetID() || Caller->GetFirehoseID()!=0)
+			return false;
+			
+		if (Caller->GetType() != ACTOR_PERSON)
+			return false;
+			
+		Person p(Caller);
+		if(p.GetEnteredCarID() != -1)
+			return false;
+		if(p.IsCommandEnabled("HolsterWeapon") && p.GetEquipment() == EQUIP_PISTOL)
+			return false;
+		if (p.GetEquipment() == EQUIP_REDIRECTSIGN)
+			return false;
+			
+		if (Caller->GetObjectType()==TYPE_PERSON && (Caller->GetEquipment()!=EQUIP_NONE || Caller->HasCommand("Dummy3Cones")|| Caller->HasCommand("Dummy2Cones") || Caller->HasCommand("Dummy1Cone")))
+			return true;
+
+		return false;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		if(Caller->GetEquipment()!=EQUIP_NONE)
+			Caller->PushActionRemoveEquipment(ACTION_NEWLIST);
+		if(Caller->HasCommand("Dummy3Cones")|| Caller->HasCommand("Dummy2Cones")|| Caller->HasCommand("Dummy1Cone"))
+		{
+			p.PushActionInterruptAnim(ACTION_NEWLIST, "getsmallobj", 2.5, true);
+			Caller->PushActionExecuteCommand(ACTION_APPEND, "DummyTrafficCone", Target, 2, false);
+		}
+	}
+};

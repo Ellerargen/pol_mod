@@ -1,0 +1,61 @@
+object Arrest : CommandScript
+{
+	Arrest()
+	{
+		SetValidTargets(ACTOR_PERSON);
+		SetGroupID(CGROUP_ARREST);
+		SetPossibleEquipment(EQUIP_NONE);
+		SetRestrictions(RESTRICT_NOTINJURED | RESTRICT_NOTARRESTED | RESTRICT_NOTLINKED);
+		SetGroupLeader(true);
+		SetPossibleCallers(ACTOR_PERSON);
+		SetPossibleExists(CPE_NONIJURED_PERSON);
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		/*if(!Caller->IsValid() || Caller->GetType() != ACTOR_PERSON)
+			return false;*/
+		Person p(Caller);
+		if(!p.IsValid() || p.IsLinkedWithPerson() || p.IsCarryingPerson() || p.GetEnteredCarID() != -1 || p.IsPhysicsSimulationEnabled())
+			return false;
+		return true;
+	}
+
+	bool CheckGroupVisibility(GameObject *Caller)
+	{
+		if(!Caller->IsValid() || Caller->GetType() != ACTOR_PERSON)
+			return false;
+		Person p(Caller);
+		return !p.IsLinkedWithPerson();
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		if(!Caller->IsValid() ||  Caller->IsEquipped() || !Target->IsValid() || Target->GetID() == Caller->GetID() )
+			return false;
+
+		Person p(Caller);
+		if(!p.IsValid() || p.IsLinkedWithPerson() || p.IsCarryingPerson() || p.GetEnteredCarID() != -1)
+			return false;
+
+		Person t(Target);
+		if(!t.IsValid() || t.GetState() != PERSONSTATE_NORMAL)
+			return false;
+
+		return (t.GetRole() != ROLE_ANIMAL && t.GetRole() != ROLE_SQUAD);
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		Caller->PushActionMove(ACTION_NEWLIST, Target, TARGET_FOLLOW);
+		Person t(Target);
+
+		bool fight = (t.GetRole() == ROLE_GANGSTER);
+
+		if(t.GetBehaviour() == BEHAVIOUR_GANGSTER_CIVILARMED)
+		                  bool fight = false;
+
+
+		Caller->PushActionArrest(ACTION_APPEND, Target, fight);
+	}
+};

@@ -1,0 +1,124 @@
+//Fachzug 22 Script												//
+//Version 1.2													//
+//Frei verwendbar, solang diese Kommentare erhalten bleiben		//
+//und per PN oder E-Mail eine schriftliche Erlaubniss vorliegt	//
+//Version 1.2													//
+//Fachzug 22 Script												//
+
+//Basiert auf:
+//ParkAtBase-Script (c) a-rescue | diese kommentar-zeile darf nicht entfernt werden
+
+const char IMG[] = "schrottplatz";
+int DummyGroup   = "91";
+const char DUMMY_HASWARNINGLIGHTS[] = "DUMMYHasWarningLights";
+
+object schrottplatz : CommandScript
+{ 
+	schrottplatz()
+	{
+		SetIcon(IMG);
+		SetCursor(IMG);
+		SetValidTargets(ACTOR_VEHICLE);
+		SetRestrictions(RESTRICT_SELFEXECUTE);
+		SetPossibleCallers(ACTOR_VEHICLE);
+		SetGroupID(DummyGroup);
+	}
+
+	bool CheckGroupVisibility(GameObject *Caller)
+	{	
+		return true;
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		if (!Caller->IsValid() || Caller->GetType() != ACTOR_VEHICLE)
+		{
+			return false;
+		}
+
+		Vehicle v(Caller);
+
+		if (v.IsValid() && !v.IsDestroyed())
+		{
+			return true;
+		}
+
+		return false;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		if (!Caller->IsValid() || !Target->IsValid() || Caller->GetID() != Target->GetID())
+		{
+			return false;
+		}
+
+		Vehicle v(Caller);
+
+		if (v.IsValid() && !v.IsDestroyed())
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{	
+		Vehicle v(Caller);
+		ActorList al;
+		Actor parkplatz;
+		Vector parkpos;
+		Vector anfahrpos;
+		Vector wendepos;
+		PersonList pl;
+
+ 		if (v.HasCommand(DUMMY_HASWARNINGLIGHTS))
+ 		{
+ 			v.EnableBlinker(BLT_NONE);
+ 			v.RemoveCommand(DUMMY_HASWARNINGLIGHTS);
+ 		}
+		
+		// blaulicht an falls aus
+		if (!v.IsBlueLightEnabled())
+		{
+			v.EnableBlueLights(true);
+		}
+		
+		// Fahrzeugerkennung, Parkplatzzuweisung, Anfahrts- und Wende-Punkt bestimmen
+		
+/////// ASF ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if (v.HasCommand("Unload"))
+		{
+			al=Game::GetActors("schrottplatz");
+			anfahrpos = Vector (0,300,0);
+			wendepos  = Vector (0,600,0);
+		}
+		else
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		{
+			Mission::PlayHint("Für dieses Fahrzeug konnte kein Parkplatz gefunden werden - Koordinaten!");
+			return;
+		}
+		
+		// Parkplatzpos.erkennung
+		
+		if(al.GetNumActors() > 0)
+		{
+			parkplatz = *al.GetActor(0);
+			parkpos   = parkplatz.GetPosition();
+		}
+		else
+		{
+			Mission::PlayHint("Für dieses Fahrzeug konnte kein Parkplatz gefunden werden - Virtuelles Objekt!");
+			return;
+		}
+		
+		// Einparken
+		Game::FindFreePosition(&v, parkpos);
+		v.PushActionMove(ACTION_NEWLIST, parkpos+anfahrpos);
+		v.PushActionTurnTo(ACTION_APPEND, parkpos+wendepos);
+		v.PushActionMove(ACTION_APPEND, parkpos);
+		v.PushActionExecuteCommand(ACTION_APPEND,"asfunload",&v,0,true);
+	}
+};

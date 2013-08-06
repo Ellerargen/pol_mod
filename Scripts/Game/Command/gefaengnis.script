@@ -1,0 +1,257 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// A-Rescue Mod - Freeplay Gefangenentransport - Script v1.0                                            //
+// *********************************************************                                            //
+//                                                                                                      //
+//	1.0| VCmdFPGefTrans                                                                                 //
+//	   |                                                                                                //
+//	2.0| DUMMYFPGefTrans                                                                                //
+//                                                                                                      //
+// __________________________________________________________________________                           //
+// Skript frei fuer alle | Einzige Regel: Kopfzeilen muessen erhlaten bleiben                           //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char IMG[]               = "gefaengnis";
+
+const char COMMANDABLE_TRUE[]  = "DUMMYSetCommandableTrue";
+const char COMMANDABLE_FALSE[] = "DUMMYSetCommandableFalse";
+const char DUMMY_HASWARNINGLIGHTS[] = "DUMMYHasWarningLights";
+
+int DummyGroup                 = "99";
+
+// 1.0
+object gefaengnis : CommandScript
+{ 
+	gefaengnis()
+	{
+		SetIcon(IMG);
+		SetCursor(IMG);
+		SetValidTargets(ACTOR_VEHICLE);
+		SetRestrictions(RESTRICT_SELFEXECUTE);
+		SetPossibleCallers(ACTOR_VEHICLE);
+		SetGroupID(DummyGroup);
+	}
+	
+	bool CheckGroupVisibility(GameObject *Caller)
+	{		
+		return true;
+	}
+	
+	bool CheckPossible(GameObject *Caller)
+	{
+		if (!Caller->IsValid() || Caller->GetType() != ACTOR_VEHICLE)
+			return false;
+			
+		Vehicle v(Caller);
+		PersonList pl = v.GetPassengers();
+		PersonList tl = v.GetTransports();
+		
+		if (v.IsValid() && !v.IsDestroyed() && pl.GetNumPersons() > 0 && tl.GetNumPersons() > 0)
+		{
+			return true;
+		}
+		
+		if (!Game::IsFreeplay())
+			return false;
+
+		/*if (p.IsCurrentAction("EActionTreatPerson"))
+			return false;*/
+
+		return false;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		if (!Caller->IsValid() || !Target->IsValid() || Caller->GetID() != Target->GetID() || Caller->GetType() != ACTOR_VEHICLE)
+			return false;
+
+		Vehicle v(Caller);
+		PersonList pl = v.GetPassengers();
+		PersonList tl = v.GetTransports();
+			
+		if (v.IsValid() && !v.IsDestroyed() && pl.GetNumPersons() > 0 && tl.GetNumPersons() > 0)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		// params
+		Vehicle v(Caller);
+		ActorList al;
+		Actor parkplatz;
+		Vector parkpos;
+		
+		if(v.HasCommand("DUMMYHasWarningLights"))
+		{
+			v.EnableBlinker(BLT_NONE);
+			v.RemoveCommand(DUMMY_HASWARNINGLIGHTS);
+		}
+
+		if(v.HasCommand("DUMMYHasSiren"))
+		{
+			Game::ExecuteCommand("DUMMYDisableSiren", &v, &v);
+		}
+		
+		if (v.IsBlueLightEnabled())
+ 		{
+ 			v.EnableBlueLights(false);
+ 		}
+
+		// gefangenenannahme-parkplatz finden
+		al=Game::GetActors("pgefaengnis");
+		if(al.GetNumActors() > 0)
+		{
+			parkplatz = *al.GetActor(0);
+			parkpos   = parkplatz.GetPosition();
+		}
+		else
+		{
+			Mission::PlayHint("Kann Gefängnis-Parkplatz nicht finden!");
+			return;
+		}
+		
+		// execute
+		Caller->PushActionMove(ACTION_NEWLIST, parkpos);
+		Caller->PushActionExecuteCommand(ACTION_APPEND, COMMANDABLE_FALSE, Caller, 1, true);
+		Caller->PushActionExecuteCommand(ACTION_APPEND, "DUMMYFPGefTrans", Caller, 0, true);
+	}
+};
+
+// 2.0
+object DUMMYFPGefTrans : CommandScript
+{ 
+	DUMMYFPGefTrans()
+	{
+		SetGroupID(DummyGroup);
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{	
+		// params
+		Vehicle v(Caller);
+		ActorList al;
+		Actor gefangenenannahme;
+		Vector gefanpos;
+		PersonList pl;
+		PersonList tl;
+		Person p;
+		Person t;
+		
+		// gefangenenannahme-eingang finden
+		al=Game::GetActors("tpolizei");
+		if(al.GetNumActors() > 0)
+		{
+			gefangenenannahme = *al.GetActor(0);
+			gefanpos          = gefangenenannahme.GetPosition();
+		}
+		else
+		{
+			Mission::PlayHint("Kann Gefängnis-Eingang nicht finden!");
+			return;
+		}
+		
+		if (childID == 0)
+		{
+		
+		if(!v.HasCommand("DUMMYHasWarningLights"))
+		{
+ 			v.EnableBlinker(BLT_BOTH);
+ 			v.AssignCommand(DUMMY_HASWARNINGLIGHTS);
+		}
+
+		if(v.HasCommand("DUMMYHasSiren"))
+		{
+			Game::ExecuteCommand("DUMMYDisableSiren", &v, &v);
+		}
+		
+		if (v.IsBlueLightEnabled())
+ 		{
+ 			v.EnableBlueLights(false);
+ 		}
+				
+			Caller->PushActionExecuteCommand(ACTION_NEWLIST, "DUMMYFPGefTrans", Caller, 1, true);
+				
+		}
+		if (childID == 1)
+		{
+		
+			// gefangene entladen
+			pl = v.GetPassengers();
+			tl = v.GetTransports();
+			int plc = v.GetNumPassengers();
+			int tlc = v.GetNumTransported();
+			int d = 0;
+		
+			if (plc > tlc) { d = tlc; } else { d = plc; }
+			
+			for (int i=0; i < d; i++)
+			{
+				//tlc--;
+				p = pl.GetPerson(i);
+				t = tl.GetPerson(i);
+				t.SetBehaviour(BEHAVIOUR_CIVILIAN_NORMAL);
+				t.PushActionLeaveCar(ACTION_NEWLIST, Target);
+				p.PushActionExecuteCommand(ACTION_NEWLIST, COMMANDABLE_FALSE, &p, 1, true);
+				p.PushActionLeaveCar(ACTION_APPEND, Target);
+				p.PushActionArrest(ACTION_APPEND, &t, false);
+				p.PushActionMove(ACTION_APPEND, gefanpos, true);
+				p.PushActionPutInBase(ACTION_APPEND);
+				p.PushActionMove(ACTION_APPEND, Target, TARGET_PASSENGERDOOR);
+				p.PushActionTurnTo(ACTION_APPEND, Target);
+				p.PushActionEnterCar(ACTION_APPEND, Target);
+				p.PushActionExecuteCommand(ACTION_APPEND, COMMANDABLE_TRUE, &p, 1, true);
+			}
+			
+			Caller->PushActionWait(ACTION_APPEND, 10);
+			
+			if (tlc > 0)
+			{
+				Caller->PushActionExecuteCommand(ACTION_APPEND, "DUMMYFPGefTrans", Caller, 1, true);
+			}
+			else
+			{
+
+				if(v.HasCommand("DUMMYHasWarningLights"))
+				{
+					v.EnableBlinker(BLT_NONE);
+					v.RemoveCommand(DUMMY_HASWARNINGLIGHTS);
+				}
+
+				if(v.HasCommand("DUMMYHasSiren"))
+				{
+					Game::ExecuteCommand("DUMMYDisableSiren", &v, &v);
+				}
+		
+				if (v.IsBlueLightEnabled())
+ 				{
+ 					v.EnableBlueLights(false);
+ 				}
+
+				Caller->PushActionExecuteCommand(ACTION_APPEND, COMMANDABLE_TRUE, Caller, 1, true);
+				
+				if(v.HasCommand("VCmdFPGoHome"))
+				{
+					Caller->PushActionExecuteCommand(ACTION_APPEND, "VCmdFPGoHome", Caller, 1, true);
+				}
+				else
+				if(v.HasCommand("GoHome"))
+				{
+				Caller->PushActionExecuteCommand(ACTION_APPEND, "GoHome", Caller, 1, true);
+				}
+			}
+		}
+	}
+};

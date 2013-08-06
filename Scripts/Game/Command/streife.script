@@ -1,0 +1,67 @@
+/* **************************************************************************** */
+/* Stadt Ellerargen - Die Polizei-Modifikation                                                       */
+/*                                                                              */
+/* Streife-Script															*/
+/* Der Streifenwagen fährt auf knopfdruck Streife											*/
+/*                                                                              */
+/* Script von: Eins Eins Zwo Modifications	 									*/
+/* Änderungen: Lenni	 														*/
+/*                                                                              */
+/* **************************************************************************** */
+
+ const char PATH_STREIFE[] = "streife";
+ const char DUMMY_HASWARNINGLIGHTS[] = "DUMMYHasWarningLights";
+
+object streife : CommandScript
+{
+	streife()
+	{
+		SetRestrictions(RESTRICT_SELFEXECUTE);
+		SetIcon("streife");
+		SetCursor("streife");
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+    {
+    if (!Target->IsValid() || Target->GetID() != Caller->GetID())
+			return false;
+
+		if (Caller->GetType() != ACTOR_VEHICLE)
+			return false;
+
+		return true;
+    }
+
+	void PushActions(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		Vehicle v(Caller);
+		v.SetSpeed(6.0f);
+
+		// Warnleuchten aus falls an
+ 		if (v.HasCommand(DUMMY_HASWARNINGLIGHTS))
+ 		{
+ 			v.EnableBlinker(BLT_NONE);
+ 			v.RemoveCommand(DUMMY_HASWARNINGLIGHTS);
+ 			return;
+ 		}
+
+		// SoSi aus falls an
+		if (v.HasCommand("DUMMYHasSiren"))
+		{
+			Game::ExecuteCommand("DUMMYDisableSiren", &v, &v);
+		}
+
+		// Blaulicht aus falls an
+		if (v.IsBlueLightEnabled())
+		{
+			v.EnableBlueLights(false);
+		}
+
+		PathList pl(PATH_STREIFE);
+		Path path(pl.GetPath(0));
+		Vector Pos;
+		Pos=path.GetNearestPoint(v.GetPosition());
+		v.PushActionMove(ACTION_APPEND, Pos, false);
+		v.PushActionUsePath(ACTION_APPEND, &path, true, 6.0f);
+	}
+};

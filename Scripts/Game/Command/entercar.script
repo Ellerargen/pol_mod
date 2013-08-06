@@ -1,0 +1,205 @@
+/* **************************************************************************** */
+/* EnterCar.script                                                          */
+/*  -> Lässt Einsatzkraefte in die Fahrzeuge einsteigen                     */
+/*  erweitertes Script, sodass jeder in jedes Fahrzeug einsteigen kann.     */
+/*  ( Ausnahmen siehe Bedingungen )                                         */
+/*                                                                          */
+/* Script von: Sixteen Tons Emergency 4                                 */
+/* Änderungen von: Lenni                                                */
+/*                                                                          */
+/* 21.04.2010, Anfangsscript                                                */
+/* 21.04.2010, Fahrzeugbezogenes Einsteigen entfernt                        */
+/* 21.04.2010, Bedingungen hinzugefuegt                                     */
+/* 25.04.2010, Bug mit DeKon behoben                                        */
+/* 25.04.2010, Bug behoben,dass kontaminierte Einsatzkräfte einsteigen konnten*/
+/*                                                                          */
+/* Bedingungen:                                                             */
+/*      * keine Zivilfahrzeuge                                          */
+/*      * Es muss ein Platz im Fahrzeug vorhanden sein                  */
+/*      * Die Sanitaeter koennen nur in den RTW, ITW oder RHC einsteigen*/
+/*      * Gangster können nicht den Transportplatz der Ambulanz benutzen*/
+/*      * Verletzte können nicht den Transportplatz der Polizei benutzen*/
+/*      * Der Rettungshundefuehrer kann nur sein Fahrzeug benutzen      */
+/* ____________________________________________________________________________ */
+/* freie Scriptverwendung solange dieser Kommentarblock erhalten bleibt.    */
+/* **************************************************************************** */
+
+const char DUMMY_HASWARNINGLIGHTS[] = "DUMMYHasWarningLights";
+
+object EnterCar : CommandScript
+{
+Vector TargetPos;
+ bool NotInLandingStage;
+
+EnterCar()
+{
+ SetValidTargets(ACTOR_VEHICLE);
+ SetRestrictions(RESTRICT_NOTDESTROYED);
+ SetNeedsConnectedHose(CFN_FAIL);
+ SetPriority(200);
+ SetSelfClickActivation(true);
+}
+
+bool CheckTarget(GameObject  *Caller, Actor *Target, int childID)
+{
+ if(!Caller->IsValid() || !Target || !Target->IsValid() ||  Target->GetType()!=ACTOR_VEHICLE)
+    return false;
+
+ SetPriority(200);
+if (Input::PriorityKeyPressed())
+     SetPriority(2000);
+
+Vehicle v(Target);
+if  (v.GetEnergy() < = 0.1f * v.GetMaxEnergy())
+    return false;
+ if(v.GetFreePassengers() == 0 && v.GetVehicleType() !=  VT_FIREFIGHTERS_DEKONP )  // Wenn Fahrzeug hat keinen Platz mehr + kein  DeKon -> false!
+      return false;
+ if(Caller->GetObjectType()==TYPE_PERSON/* &&  v.IsFlagSet(OF_ACCESSIBLE)*/)
+{
+    Person p(Caller);
+
+     if (p.GetEnteredCarID() != -1)
+        return false;
+if (p.IsContaminated() && v.GetVehicleType() != VT_FIREFIGHTERS_DEKONP )
+return false;
+     
+    if (p.IsParamedicTeam())
+    {
+    if (v.IsAmbulance() && v.GetVehicleType() != VT_AMBULANCE_NEF  && v.GetVehicleType() != VT_AMBULANCE_RHF)
+    {
+     return true;
+    }
+    else
+    {
+     return false;
+    }
+    }
+
+    if(p.IsRescueDogLeader())
+    {
+    if  (v.GetVehicleType() == VT_AMBULANCE_RHF )
+    {
+     return true;
+    }
+    else
+    {
+     return false;
+    }
+    }
+
+// Bedingungen fuer  das DeKon
+if(v.GetVehicleType() == VT_FIREFIGHTERS_DEKONP)
+{
+ if(p.IsCarryingContaminatedPerson() ||  p.IsLinkedWithContaminatedPerson() || p.IsContaminated())
+{
+ return true;
+}
+if(p.IsLinkedWithPerson() &&  !p.IsLinkedWithContaminatedPerson() || p.IsCarryingPerson() &&  !p.IsCarryingContaminatedPerson() )
+{
+return false;
+ }
+else
+{
+if(v.GetFreePassengers() == 0)
+{
+ return false;
+}
+}
+}
+
+    else if  (p.IsLinkedWithPerson() && v.GetFreeTransports() == 0)
+         return false;
+    else if (p.IsLinkedWithPerson()  && !v.IsPolice())
+        return false;
+
+     if (p.IsCarryingPerson() && v.GetFreeTransports() == 0)
+         return false;
+    else if (p.IsCarryingPerson()  && !v.IsAmbulance())
+        return false;
+
+     if(v.IsCivilCar())   // Wenn Zivilfahrzeug -> false!
+                 return false;
+    
+     if(v.HasCommand("FlyTo") && !v.IsOnGround())
+         return false;            
+    
+    if(p.IsPulling()  || (p.GetEquipment() == EQUIP_FIREHOSE && p.GetFirehoseID()  > 0))
+        return false;
+
+    return true;
+
+ }
+
+}
+
+void PushActions(GameObject *Caller, Actor  *Target, int childID)
+{
+Person p(Caller);
+Vehicle  v(Target);
+
+if (p.IsCarryingPerson())
+{
+     Person carried = p.GetCarried();
+    bool carriedClassified =  false;
+    if (carried.IsClassified())
+         carriedClassified = true;
+    if(!carriedClassified &&  (v.GetVehicleType() == VT_AMBULANCE_ITW || v.GetVehicleType() ==  VT_AMBULANCE_RTW || v.GetVehicleType() == VT_AMBULANCE_RHC))
+     {
+         ScriptInterface::ShowMessageTickerTextForSinglePlayer(Caller,  "ALLM_CLASSIFY_FIRST");
+        return;
+    }
+}
+ 
+TargetPoint targetPoint;
+if (v.GetVehicleType() ==  VT_AMBULANCE_ITW)
+    targetPoint = TARGET_PASSENGERDOOR;
+ else if (v.GetVehicleType() == VT_THW_FGRT_BH)
+     targetPoint = TARGET_REARDOOR;
+else if (v.GetVehicleType() ==  VT_FIREFIGHTERS_FMB)
+{
+    if (NotInLandingStage)
+         targetPoint = TARGET_OBJECTSURFACE;
+    else
+     {
+        Caller->PushActionMove(ACTION_NEWLIST,  TargetPos);
+        Caller->PushActionTurnTo(ACTION_APPEND,  Target);
+        Caller->PushActionEnterCar(ACTION_APPEND,  Target);
+        return;
+    }
+}
+//  diese Abfrage auf jeden Fall erst nach ITW und FMB
+else if  (p.IsParamedicTeam() || 
+        (p.HasCommand("Heal")  && (v.GetNumTransported()>0  ||  Game::IsParamedicWithInjuredInSelection(Caller))))
+     targetPoint = TARGET_REARDOOR;
+else 
+    targetPoint =  TARGET_PASSENGERDOOR;
+
+if((p.HasCommand("extinguish")  && (p.IsCarryingPerson() || p.IsLinkedWithPerson())) ||  p.IsContaminated())
+{
+    if (v.GetVehicleType() ==  VT_FIREFIGHTERS_DEKONP)
+        targetPoint = TARGET_REARDOOR;
+ }
+
+if (p.HasCommand("SendDog") &&  p.GetArrestedID() != -1)
+{
+     targetPoint =  TARGET_REARDOOR;
+     Caller->PushActionMove(ACTION_NEWLIST,  Target, targetPoint);
+     Caller->PushActionTurnTo(ACTION_APPEND, Target);
+     Caller->PushActionPutInCar(ACTION_APPEND, Target);
+     targetPoint = TARGET_PASSENGERDOOR;
+     Caller->PushActionMove(ACTION_APPEND, Target, targetPoint);
+     Caller->PushActionTurnTo(ACTION_APPEND, Target);
+     Caller->PushActionEnterCar(ACTION_APPEND, Target);
+}
+ else
+{
+     Caller->PushActionMove(ACTION_NEWLIST,  Target, targetPoint);
+     Caller->PushActionTurnTo(ACTION_APPEND, Target);
+     Caller->PushActionEnterCar(ACTION_APPEND, Target);
+}
+{
+v.EnableBlinker(BLT_NONE);
+v.RemoveCommand(DUMMY_HASWARNINGLIGHTS);
+}
+}
+};

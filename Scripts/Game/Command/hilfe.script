@@ -1,0 +1,142 @@
+//	MT_ERSTE_HILFE V2.0 by manuelt
+//	Die Verwendung in anderen Emergency4-Modifikationen ist gestattet,
+//	wenn dieser Kommentar im Skript erhalten bleibt!
+
+object erste_hilfe : CommandScript
+{
+	erste_hilfe()
+	{
+		SetValidTargets(ACTOR_PERSON);
+		SetIcon("hilfe");
+		SetCursor("hilfe");
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int childID)
+	{
+		if(!Caller->IsValid() || !Target->IsValid() || Target->GetID() == Caller->GetID() || Caller->IsEquipped())
+			return false;
+
+		Person p(Target);
+		
+		if(p.IsHealing())
+			return false;
+			
+		if (p.HasCommand("isTreated"))
+			return false;
+
+		if(Target->GetType()==ACTOR_PERSON)
+		{			
+			if(!p.IsDrowning() && !p.IsHealing() && p.GetRole() != ROLE_ANIMAL && !p.IsRescueDog() && (p.IsInjured() || p.IsWoundedSquad()) && p.GetEnteredCarID() == -1 && !p.IsCarried() )
+			return true;
+
+		}
+
+		return false;
+	}
+
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		Person p(Target);
+		bool carriedClassified = false;
+			if (p.IsClassified())
+				carriedClassified = true;
+
+		//Unterscheidung zwischen Freeplay / Kampagne -> siehe Readme!
+		//Ab hier nur im Freeplay!
+
+        if (!carriedClassified && p.GetUserData() != 42 && p.GetUserData() != 43 && p.GetLife() > 0) //Noch nicht von NA, RA oder mit EH behandelt bzw ist noch am Leben!
+		{
+        	 	Actor ReinforcementArea1;
+		       	ActorList l1("ReinforcementArea1");
+        	        if(l1.GetNumActors() > 0)
+		        {
+		                int chance;
+		                chance = rand()%15;
+                		if (chance == 1)
+		                {
+                		    p.SetLife(-1500.0f);
+		                }
+                		elseif (chance >= 14)
+		                {
+                		    p.SetLife(15.0f);
+		                }
+                		else
+		                {
+                		    //Life?
+		                    int Life;
+                		    int maxLife = p.GetLife();
+		                    Life = rand()%maxLife;
+                		    p.SetLife(Life);
+		                }
+            		}
+		}
+		//Bis hierher nur im Freeplay!
+		if (p.GetLife() <= 0 && !p.GetUserData() == 44) 
+			{
+				//Beginne mit Reanimation!
+				zufall = rand()%20;
+				p.SetUserData(44);
+				if (zufall == 13)
+				{
+					p.SetLife(15);
+					Mission::PlayHint("Reanimation erfolgreich!");
+				}
+			
+			}
+		Caller->PushActionMove(ACTION_NEWLIST, Target, TARGET_TREATMENT);
+		Caller->PushActionTurnTo(ACTION_APPEND, Target);
+
+		//Animation starten!
+		Caller->PushActionSwitchAnim(ACTION_APPEND,"treatinjured1");
+
+		//Erste Hilfe, LifeDrain wird auf 0.69 gesetzt!
+		if (p.GetUserData() != 42 && p.GetUserData() != 43 && p.GetLife() > 0) //Noch nicht von NA, RA oder mit EH behandelt bzw ist noch am Leben!
+		{
+			p.SetInjuredLifeDrain(0.69f);
+			//Damit andere Skripte erkennen, das der Patient bereits behandelt worden ist!
+			p.SetUserData(42);
+		}
+
+		//EH Animation ausführen, bis ein RA oder NA den Patienten übernimmt!
+		Caller->PushActionExecuteCommand(ACTION_APPEND,"ActionCheckPatient",Target,0,true);
+	}
+};
+object ActionCheckPatient : CommandScript
+{
+	ActionCheckPatient()
+	{
+		SetValidTargets(ACTOR_PERSON);
+	}
+
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		if(!Caller->IsValid() || !Target->IsValid() || Target->GetID() == Caller->GetID())
+			return false;
+
+		if(Target->GetType()==ACTOR_PERSON)
+		{
+			Person p(Target);
+			if(!p.IsDrowning() && !p.IsHealing() && p.GetRole() != ROLE_ANIMAL && !p.IsRescueDog() && (p.IsInjured() || p.IsWoundedSquad()) && p.GetEnteredCarID() == -1 && !p.IsCarried() )
+				return true;
+		}
+
+		return false;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		Person p(Target);
+		if (!p.HasCommand("isTreated"))
+		{
+			//Patient noch nicht von NA, RA übernommen!
+			Caller->PushActionExecuteCommand(ACTION_APPEND,"ActionCheckPatient",Target,0,true);
+
+		}
+		else
+		{
+			//Patient von NA, RA übernommen!
+			Caller->PushActionSwitchAnim(ACTION_APPEND,"idle");
+		}
+	}
+};

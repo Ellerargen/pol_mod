@@ -1,0 +1,317 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// A-Rescue Mod - Freeplay GoKH - Script v1.4                                                           //
+// ******************************************                                                           //
+//                                                                                                      //
+//	1.0| VCmdFPGoKH                                                                                     //
+//	   |                                                                                                //
+//	2.0| DUMMYFPGoKH                                                                                    //
+//                                                                                                      //
+// __________________________________________________________________________                           //
+// Skript frei fuer alle | Einzige Regel: Kopfzeilen muessen erhlaten bleiben                           //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char IMG[]               = "krankenhaus";
+
+const char COMMANDABLE_TRUE[]  = "DUMMYSetCommandableTrue";
+const char COMMANDABLE_FALSE[] = "DUMMYSetCommandableFalse";
+const char DUMMY_HASWARNINGLIGHTS[] = "DUMMYHasWarningLights";
+
+int DummyGroup                 = "99";
+
+// 1.0
+object krankenhaus : CommandScript
+{ 
+	krankenhaus()
+	{
+		SetIcon(IMG);
+		SetCursor(IMG);
+		SetValidTargets(ACTOR_VEHICLE);
+		SetRestrictions(RESTRICT_SELFEXECUTE);
+		SetPossibleCallers(ACTOR_VEHICLE);
+		SetGroupID(DummyGroup);
+	}
+	
+	bool CheckGroupVisibility(GameObject *Caller)
+	{
+		/*Vehicle v(Caller);
+		PersonList pl = v.GetPassengers();
+		PersonList tl = v.GetTransports();
+		
+		if (pl.GetNumPersons() > 0 && tl.GetNumPersons() > 0)
+			return true;
+			
+		return false;*/
+		
+		return true;
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		if (!Caller->IsValid() || Caller->GetType() != ACTOR_VEHICLE)
+			return false;
+			
+		Vehicle v(Caller);
+		PersonList pl = v.GetPassengers();
+		PersonList tl = v.GetTransports();
+		
+		if (v.IsValid() && !v.IsDestroyed() && pl.GetNumPersons() > 0 && tl.GetNumPersons() > 0)
+		{
+			return true;
+		}
+		
+		if (!Game::IsFreeplay())
+			return false;
+
+		/*if (p.IsCurrentAction("EActionTreatPerson"))
+			return false;*/
+
+		return false;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		if (!Caller->IsValid() || !Target->IsValid() || Caller->GetID() != Target->GetID())
+			return false;
+
+		Vehicle v(Caller);
+		PersonList pl = v.GetPassengers();
+		PersonList tl = v.GetTransports();
+			
+		if (v.IsValid() && !v.IsDestroyed() && pl.GetNumPersons() > 0 && tl.GetNumPersons() > 0)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{
+		// params
+		Vehicle v(Caller);
+		ActorList al;
+		Actor parkplatz;
+		Vector parkpos;
+		Vector anfahrrichtung;
+		Vector wenderichtung;
+		PersonList pl1;
+		PersonList pl2;
+		PersonList pl3;
+		
+		// notarzt an board?
+		pl1 = v.GetPassengers();
+		bool na = false;
+		for(int i=0; i < pl1.GetNumPersons(); i++)
+		{
+			// ja (wenn person heal-kommando (nicht arm_heal) besitzt)
+			if (pl1.GetPerson(i)->HasCommand("Heal"))
+			{
+				// notarzt ist an board
+				na = true;
+			}	
+		}
+		// notarzt notwendig?
+		pl2 = v.GetTransports();
+		bool nan = false;
+		for(int i=0; i < pl2.GetNumPersons(); i++)
+		{
+			// ja (wenn nicht tot oder energie unter 500)
+			if (pl2.GetPerson(i)->GetLife() > 0 && pl2.GetPerson(i)->GetLife() < 500)
+			{
+				// notarzt wird benoetigt
+				nan = true;
+			}	
+		}
+		// wenn notarzt notwendig und nicht an board, abtransport nicht moeglich
+		if (nan && !na)
+		{
+			Audio::PlaySample("mod:Audio/FX/Sontiges/notarzt.wav");
+			return;
+		}
+		
+		if(v.HasCommand("DUMMYHasWarningLights"))
+		{
+			v.EnableBlinker(BLT_NONE);
+			v.RemoveCommand(DUMMY_HASWARNINGLIGHTS);
+		}
+
+		if(v.HasCommand("DUMMYHasSiren"))
+		{
+			Game::ExecuteCommand("DUMMYDisableSiren", &v, &v);
+		}
+		
+		if (v.IsBlueLightEnabled())
+ 		{
+ 			v.EnableBlueLights(false);
+ 		}
+		
+		pl3 = v.GetTransports();
+		bool sosi = true;
+		for(int i=0; i < pl3.GetNumPersons(); i++)
+		{
+			if (pl3.GetPerson(i)->GetLife() < 0 || pl3.GetPerson(i)->GetLife() > 750)
+			{
+				sosi = false;
+				v.EnableBlueLights(false);
+			}	
+		}
+		if (sosi)
+		{
+			if(v.HasCommand("DUMMYHasWarningLights"))
+			{
+				v.EnableBlinker(BLT_NONE);
+				v.RemoveCommand(DUMMY_HASWARNINGLIGHTS);
+			}
+
+			if (!v.IsBlueLightEnabled())
+ 			{
+ 				v.EnableBlueLights(true);
+ 			}
+
+			if(!v.HasCommand("DUMMYHasSiren"))
+			{
+				Game::ExecuteCommand("VCmdSirenAlle", &v, &v);
+			}
+		}
+		else
+		{
+			if(v.HasCommand("DUMMYHasWarningLights"))
+			{
+				v.EnableBlinker(BLT_NONE);
+				v.RemoveCommand(DUMMY_HASWARNINGLIGHTS);
+			}
+
+			if(v.HasCommand("DUMMYHasSiren"))
+			{
+				Game::ExecuteCommand("DUMMYDisableSiren", &v, &v);
+			}
+
+			if (!v.IsBlueLightEnabled())
+ 			{
+ 				v.EnableBlueLights(false);
+ 			}
+		}
+
+		//  krankenhaus-parkplatz
+		al=Game::GetActors("pkrankenhaus");
+		if(al.GetNumActors() > 0)
+		{
+			parkplatz = *al.GetActor(0);
+			parkpos   = parkplatz.GetPosition();
+		}
+		else
+		{
+			Mission::PlayHint("Kann Krankenhaus-Parkplatz nicht finden!");
+			return;
+		}
+		
+		// execute	
+		Caller->PushActionMove(ACTION_APPEND, parkpos);
+		Caller->PushActionExecuteCommand(ACTION_APPEND, COMMANDABLE_FALSE, Caller, 1, true);
+		Caller->PushActionExecuteCommand(ACTION_APPEND, "DUMMYFPGoKH", Caller, 1, true);
+		Caller->PushActionWait(ACTION_APPEND, 10.0); // zeit zum ausladen
+		Caller->PushActionExecuteCommand(ACTION_APPEND, COMMANDABLE_TRUE, Caller, 1, true);
+		
+		if(v.HasCommand("VCmdFPGoHome"))
+		{
+			Caller->PushActionExecuteCommand(ACTION_APPEND, "VCmdFPGoHome", Caller, 1, true);
+		}
+		else
+		if(v.HasCommand("GoHome"))
+		{
+			Caller->PushActionExecuteCommand(ACTION_APPEND, "GoHome", Caller, 1, true);
+		}
+	}
+};
+
+// 2.0
+object DUMMYFPGoKH : CommandScript
+{ 
+	DUMMYFPGoKH()
+	{
+		SetGroupID(DummyGroup);
+	}
+
+	bool CheckPossible(GameObject *Caller)
+	{
+		return true;
+	}
+	
+	bool CheckTarget(GameObject *Caller, Actor *Target, int ChildID)
+	{
+		return true;
+	}
+
+	void PushActions(GameObject *Caller, Actor *Target, int childID)
+	{	
+		// params
+		Vehicle v(Caller);
+		ActorList al;
+		Actor notaufnahme;
+		Vector notpos;
+		PersonList pl;
+		Person p;
+		
+		//  krankenhaus-eingang
+		al=Game::GetActors("tkrankenhaus");
+		if(al.GetNumActors() > 0)
+		{
+			notaufnahme = *al.GetActor(0);
+			notpos      = notaufnahme.GetPosition();
+		}
+		else
+		{
+			Mission::PlayHint("Kann Krankenhaus-Eingang nicht finden!");
+			return;
+		}
+		
+		// execute
+		if(!v.HasCommand("DUMMYHasWarningLights"))
+		{
+ 			v.EnableBlinker(BLT_BOTH);
+ 			v.AssignCommand(DUMMY_HASWARNINGLIGHTS);
+		}
+
+		if(v.HasCommand("DUMMYHasSiren"))
+		{
+			Game::ExecuteCommand("DUMMYDisableSiren", &v, &v);
+		}
+		
+		if (v.IsBlueLightEnabled())
+ 		{
+ 			v.EnableBlueLights(false);
+ 		}
+		
+		//  patienten entladen
+		pl = v.GetPassengers();
+		for(int i=0; i < pl.GetNumPersons(); i++)
+		{
+			p = pl.GetPerson(i);
+			p.PushActionExecuteCommand(ACTION_NEWLIST, COMMANDABLE_FALSE, &p, 1, true);
+			if (!p.IsCarryingPerson())
+			{
+				p.PushActionLeaveCar(ACTION_APPEND, Target);
+				p.PushActionMove(ACTION_APPEND, notpos, true);
+				p.PushActionDeleteOwner(ACTION_APPEND);
+			}
+			else
+			if (p.IsCarryingPerson() && v.GetNumTransported() > 0)
+			{
+				p.PushActionLeaveCar(ACTION_APPEND, Target);
+				p.PushActionMove(ACTION_APPEND, notpos, true);
+				p.PushActionPutInBase(ACTION_APPEND);
+				
+				// wieder einsteigen
+				p.PushActionMove(ACTION_APPEND, Target, TARGET_REARDOOR);
+				p.PushActionTurnTo(ACTION_APPEND, Target);
+				p.PushActionEnterCar(ACTION_APPEND, Target);
+			}
+			else
+			{
+				Mission::PlayHint("RTW kann nicht entladen werden!");
+				return;
+			}
+			p.PushActionExecuteCommand(ACTION_APPEND, COMMANDABLE_TRUE, &p, 1, true);
+		}
+	}
+};
