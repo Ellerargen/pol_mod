@@ -103,7 +103,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MainMission.cpp">
+    <ClCompile Include="Mission01">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

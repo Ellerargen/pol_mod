@@ -92,7 +92,7 @@
     <None Include="SDK\readme.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MainMission.cpp" />
+    <ClCompile Include="Mission01" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
